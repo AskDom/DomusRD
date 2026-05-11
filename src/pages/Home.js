@@ -61,7 +61,7 @@ useEffect(() => {
   const filteredProperties = properties.filter((p) => {
     return (
       (!filters.type || p.type === filters.type) &&
-      (!filters.rooms || p.rooms == filters.rooms) &&
+      (!filters.rooms || p.rooms === filters.rooms) &&
       (!filters.minPrice || p.price >= filters.minPrice) &&
       (!filters.maxPrice || p.price <= filters.maxPrice) &&
       (!filters.status || p.status === filters.status)

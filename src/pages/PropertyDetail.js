@@ -39,26 +39,26 @@ export default function PropertyDetail() {
 
           <div className="md:col-span-2">
             <img
-              src={property.image}
+              src={property.image} alt="property"
               className="w-full h-[400px] object-cover rounded-2xl"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:col-span-2">
             <img
-              src={property.image}
+              src={property.image} alt="property"
               className="w-full h-[190px] object-cover rounded-2xl"
             />
             <img
-              src={property.image}
+              src={property.image} alt="property"
               className="w-full h-[190px] object-cover rounded-2xl"
             />
             <img
-              src={property.image}
+              src={property.image} alt="property"
               className="w-full h-[190px] object-cover rounded-2xl"
             />
             <img
-              src={property.image}
+              src={property.image} alt="property"
               className="w-full h-[190px] object-cover rounded-2xl"
             />
           </div>
