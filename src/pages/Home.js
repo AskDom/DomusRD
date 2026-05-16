@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Link } from "react-router-dom";
 import propertiesData from "../data/properties";
+import AuthModal from "../components/AuthModal";
 // =======================
 // FIX ICONOS LEAFLET
 // =======================
@@ -25,6 +26,7 @@ export default function Home() {
   // =======================
   const [properties, setProperties] = useState(propertiesData);
   const [loading, setLoading] = useState(true);
+  const [authOpen, setAuthOpen] = useState(false);
 
 useEffect(() => {
 
@@ -92,9 +94,7 @@ useEffect(() => {
           Real Estate
         </p>
       </div>
-
-    </div>
-
+      </div>
     {/* SEARCH */}
     <div className="hidden md:flex flex-1 max-w-2xl">
 
@@ -157,10 +157,11 @@ useEffect(() => {
       </Link>
 
       {/* SIGN IN */}
-      <button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-black transition">
-
+       <button
+        onClick={() => setAuthOpen(true)}
+        className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-black transition"
+      >
         👤 Sign In
-
       </button>
 
     </div>
@@ -350,7 +351,14 @@ useEffect(() => {
   )}
 
 </div>
+
       </div>
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+      />
+
     </div>
   );
 }

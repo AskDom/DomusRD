@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import propertiesData from "../data/properties";
 
 // =======================
 // CONFIG ICONOS LEAFLET
@@ -133,7 +134,7 @@ function LocationSelector({ setPosition }) {
 }
 
 export default function App() {
-  const [properties, setProperties] = useState(initialProperties);
+  const [properties, setProperties] = useState(propertiesData);
 
   const [form, setForm] = useState({
     title: "",
