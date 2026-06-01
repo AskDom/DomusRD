@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Link } from "react-router-dom";
 import propertiesData from "../data/properties";
-import AuthModal from "../components/AuthModal";
+import Navbar from "../components/Navbar";
 // =======================
 // FIX ICONOS LEAFLET
 // =======================
@@ -26,7 +26,6 @@ export default function Home() {
   // =======================
   const [properties, setProperties] = useState(propertiesData);
   const [loading, setLoading] = useState(true);
-  const [authOpen, setAuthOpen] = useState(false);
 
 useEffect(() => {
 
@@ -73,102 +72,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
 
-      {/* NAVBAR PREMIUM */}
-<div className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200 shadow-sm">
-
-  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-
-    {/* LOGO */}
-    <div className="flex items-center gap-2 cursor-pointer">
-
-      <div className="bg-blue-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md">
-        🏠
-      </div>
-
-      <div>
-        <h1 className="font-black text-xl leading-none">
-          DomusRD
-        </h1>
-
-        <p className="text-xs text-gray-500">
-          Real Estate
-        </p>
-      </div>
-      </div>
-    {/* SEARCH */}
-    <div className="hidden md:flex flex-1 max-w-2xl">
-
-      <div className="w-full bg-white border border-gray-200 rounded-full shadow-sm px-4 py-3 flex items-center gap-3 hover:shadow-md transition">
-
-        <span className="text-gray-400 text-lg">
-          🔍
-        </span>
-
-        <input
-          type="text"
-          placeholder="Buscar ciudad, sector o propiedad..."
-          className="w-full outline-none bg-transparent text-sm"
-        />
-
-      </div>
-
-    </div>
-
-    {/* MENU */}
-    <div className="flex items-center gap-3">
-
-      {/* LINKS */}
-      <div className="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-700">
-
-        <button className="hover:text-blue-600 transition">
-          Comprar
-        </button>
-
-        <button className="hover:text-blue-600 transition">
-          Rentar
-        </button>
-
-        <button className="hover:text-blue-600 transition">
-          Mapa
-        </button>
-
-      </div>
-
-      {/* FAVORITOS */}
-      <button className="relative bg-white border border-gray-200 px-4 py-2 rounded-full hover:shadow-md transition">
-
-        ❤️
-
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-          2
-        </span>
-
-      </button>
-
-      {/* PUBLICAR */}
-      <Link to="/publish">
-
-        <button className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-medium shadow-md transition">
-
-          + Publicar
-
-        </button>
-
-      </Link>
-
-      {/* SIGN IN */}
-       <button
-        onClick={() => setAuthOpen(true)}
-        className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-black transition"
-      >
-        👤 Sign In
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
+      <Navbar favoritesCount={properties.filter((p) => p.liked).length} />
 
       {/* CONTENIDO */}
       <div className="p-4 md:p-6">
@@ -353,11 +257,6 @@ useEffect(() => {
 </div>
 
       </div>
-
-      <AuthModal
-        isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
-      />
 
     </div>
   );

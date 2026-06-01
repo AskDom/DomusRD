@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 import properties from "../data/properties";
+import Navbar from "../components/Navbar";
 
 
 export default function PropertyDetail() {
@@ -21,13 +22,13 @@ export default function PropertyDetail() {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      {/* NAVBAR */}
-      <div className="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 className="font-bold text-xl">BienesRaicesRD</h1>
+      <Navbar />
 
+      {/* BACK BUTTON */}
+      <div className="max-w-6xl mx-auto px-4 pt-4">
         <Link to="/">
-          <button className="bg-gray-200 px-4 py-2 rounded-xl">
-            Volver
+          <button className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-medium transition">
+            ← Volver
           </button>
         </Link>
       </div>

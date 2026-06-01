@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import propertiesData from "../data/properties";
+import Navbar from "../components/Navbar";
 
 // =======================
 // CONFIG ICONOS LEAFLET
@@ -133,7 +134,7 @@ function LocationSelector({ setPosition }) {
   return null;
 }
 
-export default function App() {
+export default function Publish() {
   const [properties, setProperties] = useState(propertiesData);
 
   const [form, setForm] = useState({
@@ -214,46 +215,7 @@ export default function App() {
     return (
   <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
 
-    {/* NAVBAR PREMIUM */}
-    <div className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200 shadow-sm">
-
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-
-        {/* LOGO */}
-        <div className="flex items-center gap-2">
-
-          <div className="bg-blue-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md">
-            🏠
-          </div>
-
-          <div>
-            <h1 className="font-black text-xl leading-none">
-              DomusRD
-            </h1>
-
-            <p className="text-xs text-gray-500">
-              Publicar Propiedad
-            </p>
-          </div>
-
-        </div>
-
-        {/* MENU */}
-        <div className="flex items-center gap-3">
-
-          <button className="bg-white border border-gray-200 px-4 py-2 rounded-full hover:shadow-md transition">
-
-          </button>
-
-          <button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-black transition">
-            👤 Sign In
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
+      <Navbar />
 
     {/* CONTENIDO */}
     <div className="p-4 md:p-6">
