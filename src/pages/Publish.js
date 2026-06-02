@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import propertiesData from "../data/properties";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../context/ThemeContext";
+import { useProperties } from "../context/PropertiesContext";
+import { useAuth } from "../context/AuthContext";
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -28,8 +28,8 @@ const selectClass =
   "w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 outline-none text-gray-800 dark:text-gray-100 transition-colors";
 
 export default function Publish() {
-  const { dark } = useTheme();
-  const [properties, setProperties] = useState(propertiesData);
+  const { allProperties, addProperty } = useProperties();
+  const { currentUser } = useAuth();
   const [position, setPosition] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -52,13 +52,15 @@ export default function Publish() {
     e.preventDefault();
     let lat = position?.lat;
     let lng = position?.lng;
-    if (!lat || !lng) {
-      if (!form.lat || !form.lng) return alert("Selecciona una ubicación en el mapa");
-      lat = parseFloat(form.lat);
-      lng = parseFloat(form.lng);
-    }
-    const newProperty = { id: Date.now(), ...form, lat, lng, liked: false };
-    setProperties([...properties, newProperty]);
+    if (!lat || !lng) return alert("Selecciona una ubicación en el mapa");
+    addProperty({
+      ...form,
+      lat,
+      lng,
+      liked: false,
+      city: form.title,
+      publishedBy: currentUser?.name || "Anónimo",
+    });
     setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, image: "", lat: "", lng: "" });
     setPosition(null);
     setSubmitted(true);
@@ -90,7 +92,7 @@ export default function Publish() {
             style={{ zIndex: 0 }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {properties.map((prop) => (
+            {allProperties.map((prop) => (
               <Marker key={prop.id} position={[prop.lat, prop.lng]}>
                 <Popup><strong>{prop.title}</strong><br />${prop.price?.toLocaleString()}</Popup>
               </Marker>

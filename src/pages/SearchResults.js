@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import propertiesData from "../data/properties";
+import { useEffect } from "react";
 import Navbar from "../components/Navbar";
+import { useProperties } from "../context/PropertiesContext";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -30,17 +31,19 @@ function MapFocus({ properties }) {
 export default function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeId, setActiveId] = useState(null);
-  const [liked, setLiked] = useState({});
   const [filters, setFilters] = useState({ status: "", type: "", rooms: "" });
+  const { allProperties, toggleFavorite, isFavorite } = useProperties();
   const query = searchParams.get("q") || "";
 
-  const toggleLike = (id) => setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
-
   // Filtra por query + filtros adicionales
-  const results = propertiesData.filter((p) => {
-    const matchQuery = query.toLowerCase() === "república dominicana"
+  const results = allProperties.filter((p) => {
+    const q = query.toLowerCase();
+    const matchQuery = q === "" || q === "república dominicana"
       ? true
-      : p.title.toLowerCase().includes(query.toLowerCase());
+      : p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.city?.toLowerCase().includes(q) ||
+        p.type.toLowerCase().includes(q);
     const matchStatus = !filters.status || p.status === filters.status;
     const matchType = !filters.type || p.type === filters.type;
     const matchRooms = !filters.rooms || p.rooms === Number(filters.rooms);
@@ -144,10 +147,10 @@ export default function SearchResults() {
                         </span>
                       </div>
                       <button
-                        onClick={(e) => { e.preventDefault(); toggleLike(prop.id); }}
+                        onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
                         className="absolute top-2 right-2 bg-white dark:bg-gray-800 w-7 h-7 rounded-full flex items-center justify-center shadow text-xs hover:scale-110 transition-transform"
                       >
-                        {liked[prop.id] ? "❤️" : "🤍"}
+                        {isFavorite(prop.id) ? "❤️" : "🤍"}
                       </button>
                     </div>
                     <div className="p-3">

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import propertiesData from "../data/properties";
 import Navbar from "../components/Navbar";
+import { useProperties } from "../context/PropertiesContext";
 
 const PROVINCIAS = [
   "Santo Domingo", "Santiago", "Punta Cana", "Samaná",
@@ -10,16 +10,12 @@ const PROVINCIAS = [
 ];
 
 export default function Home() {
-  const [properties, setProperties] = useState(propertiesData);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const { allProperties, toggleFavorite, isFavorite } = useProperties();
 
   useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
-
-  const toggleLike = (id) => {
-    setProperties(properties.map((p) => p.id === id ? { ...p, liked: !p.liked } : p));
-  };
 
   const handleSearch = (term) => {
     const q = term || query;
@@ -29,7 +25,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <Navbar favoritesCount={properties.filter((p) => p.liked).length} />
+      <Navbar />
 
       {/* ── HERO ── */}
       <div className="relative h-[420px] overflow-hidden">
@@ -95,11 +91,11 @@ export default function Home() {
       </div>
 
       {/* ── PROPIEDADES DESTACADAS ── */}
-      <div className="max-w-8xl mx-auto px-4 md:px-7 py-10">
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">Propiedades destacadas</h2>
-            <p className="text-gray-400 text-sm mt-0.5">{properties.length} propiedades disponibles</p>
+            <p className="text-gray-400 text-sm mt-0.5">{allProperties.length} propiedades disponibles</p>
           </div>
           <button
             onClick={() => handleSearch("República Dominicana")}
@@ -122,7 +118,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            properties.map((prop) => (
+            allProperties.map((prop) => (
               <Link key={prop.id} to={`/property/${prop.id}`}>
                 <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-transparent dark:border-gray-700">
                   <div className="relative overflow-hidden">
@@ -142,15 +138,15 @@ export default function Home() {
                       </span>
                     </div>
                     <button
-                      onClick={(e) => { e.preventDefault(); toggleLike(prop.id); }}
+                      onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
                       className="absolute top-3 right-3 bg-white dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform text-sm"
                     >
-                      {prop.liked ? "❤️" : "🤍"}
+                      {isFavorite(prop.id) ? "❤️" : "🤍"}
                     </button>
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
-                    <p className="text-gray-400 text-xs mt-0.5">📍 República Dominicana</p>
+                    <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "República Dominicana"}</p>
                     <p className="text-blue-600 dark:text-blue-400 font-black text-lg mt-2">
                       ${prop.price.toLocaleString()}
                       {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
