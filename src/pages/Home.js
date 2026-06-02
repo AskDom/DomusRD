@@ -1,169 +1,171 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import propertiesData from "../data/properties";
 import Navbar from "../components/Navbar";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl: require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
-});
+const PROVINCIAS = [
+  "Santo Domingo", "Santiago", "Punta Cana", "Samaná",
+  "Jarabacoa", "La Romana", "Baní", "San Cristóbal",
+];
 
 export default function Home() {
   const [properties, setProperties] = useState(propertiesData);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 2000);
-  }, []);
-
-  const [filters, setFilters] = useState({
-    type: "", minPrice: "", maxPrice: "", rooms: "", status: "",
-  });
+  useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
 
   const toggleLike = (id) => {
     setProperties(properties.map((p) => p.id === id ? { ...p, liked: !p.liked } : p));
   };
 
-  const filteredProperties = properties.filter((p) => {
-    return (
-      (!filters.type || p.type === filters.type) &&
-      (!filters.rooms || p.rooms === filters.rooms) &&
-      (!filters.minPrice || p.price >= filters.minPrice) &&
-      (!filters.maxPrice || p.price <= filters.maxPrice) &&
-      (!filters.status || p.status === filters.status)
-    );
-  });
+  const handleSearch = (term) => {
+    const q = term || query;
+    if (!q.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Navbar favoritesCount={properties.filter((p) => p.liked).length} />
 
-      <div className="p-4 md:p-6">
+      {/* ── HERO ── */}
+      <div className="relative h-[420px] overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1584738766473-61c083514bf4?w=1800&q=85"
+          alt="hero"
+          className="w-full h-full object-cover object-[center_60%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/75" />
 
-        {/* FILTER BAR */}
-        <div className="relative -mt-2 mb-8 z-40">
-          <div className="max-w-6xl mx-auto bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-xl rounded-3xl p-4 transition-colors duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
+          <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-5 uppercase tracking-widest">
+            República Dominicana
+          </span>
+          <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-3 drop-shadow-lg">
+            Encuentra tu hogar <span className="text-blue-400">ideal</span>
+          </h1>
+          <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg">
+            Miles de propiedades en venta y renta en todo el país
+          </p>
 
-              <select
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          {/* SEARCH BAR */}
+          <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-2 flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="🔍  Busca por ciudad, sector o provincia..."
+              className="flex-1 px-4 py-3 outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm"
+            />
+            <button
+              onClick={() => handleSearch()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shrink-0"
+            >
+              Buscar
+            </button>
+          </div>
+
+          {/* SUGERENCIAS RÁPIDAS */}
+          <div className="flex flex-wrap gap-2 mt-4 justify-center">
+            {PROVINCIAS.map((p) => (
+              <button
+                key={p}
+                onClick={() => handleSearch(p)}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs px-3 py-1.5 rounded-full border border-white/30 transition"
               >
-                <option value="">Venta o renta</option>
-                <option value="Venta">Venta</option>
-                <option value="Renta">Renta</option>
-              </select>
-
-              <select
-                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              >
-                <option value="">Tipo de propiedad</option>
-                <option>Apartamento</option>
-                <option>Casa</option>
-                <option>Villa</option>
-              </select>
-
-              <input
-                type="number"
-                placeholder="Precio máximo"
-                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              />
-
-              <select
-                onChange={(e) => setFilters({ ...filters, rooms: e.target.value })}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              >
-                <option value="">Habitaciones</option>
-                {[1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}
-              </select>
-
-              <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-3 font-semibold shadow-lg transition">
-                🔍 Buscar
+                {p}
               </button>
-
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* MAPA */}
-        <div className="relative mb-6">
-          <MapContainer
-            center={[18.7357, -70.1627]}
-            zoom={7}
-            scrollWheelZoom={false}
-            className="w-full h-[420px] rounded-3xl shadow-xl"
-            style={{ zIndex: 0 }}
+        {/* STATS */}
+        <div className="absolute bottom-5 right-6 hidden md:flex gap-6 text-white">
+          {[["2,400+", "Propiedades"], ["180+", "Agentes"], ["12", "Ciudades"]].map(([n, l]) => (
+            <div key={l} className="text-center">
+              <p className="font-black text-xl">{n}</p>
+              <p className="text-gray-300 text-xs">{l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── PROPIEDADES DESTACADAS ── */}
+      <div className="max-w-8xl mx-auto px-4 md:px-7 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white">Propiedades destacadas</h2>
+            <p className="text-gray-400 text-sm mt-0.5">{properties.length} propiedades disponibles</p>
+          </div>
+          <button
+            onClick={() => handleSearch("República Dominicana")}
+            className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline"
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {filteredProperties.map((prop) => (
-              <Marker key={prop.id} position={[prop.lat, prop.lng]}>
-                <Popup>{prop.title}</Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+            Ver todas →
+          </button>
         </div>
 
-        {/* FEED */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading ? (
-            [...Array(6)].map((_, index) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden animate-pulse transition-colors">
-                <div className="h-48 bg-gray-300 dark:bg-gray-700"></div>
+            [...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-300 dark:bg-gray-700" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3" />
                 </div>
               </div>
             ))
           ) : (
-            filteredProperties.map((prop) => (
+            properties.map((prop) => (
               <Link key={prop.id} to={`/property/${prop.id}`}>
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow relative hover:shadow-xl transition duration-300 border border-transparent dark:border-gray-700">
-
-                  {/* FAVORITO */}
-                  <button
-                    onClick={(e) => { e.preventDefault(); toggleLike(prop.id); }}
-                    className="absolute top-2 right-2 text-lg z-20"
-                  >
-                    {prop.liked ? "❤️" : "🤍"}
-                  </button>
-
-                  {/* IMAGEN */}
-                  <img
-                    src={prop.image}
-                    alt={prop.title}
-                    className="w-full h-48 object-cover rounded-xl"
-                  />
-
-                  {/* STATUS */}
-                  <div className="absolute top-3 left-3 bg-white dark:bg-gray-700 dark:text-gray-100 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                    {prop.status}
+                <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-transparent dark:border-gray-700">
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={prop.image}
+                      alt={prop.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${
+                        prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
+                      }`}>
+                        {prop.status}
+                      </span>
+                      <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">
+                        {prop.type}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); toggleLike(prop.id); }}
+                      className="absolute top-3 right-3 bg-white dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform text-sm"
+                    >
+                      {prop.liked ? "❤️" : "🤍"}
+                    </button>
                   </div>
-
-                  {/* INFO */}
-                  <div className="mt-3">
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{prop.title}</h3>
-                    <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg">${prop.price.toLocaleString()}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                      {prop.rooms} hab • {prop.baths} baños • {prop.parking} parqueos
+                  <div className="p-4">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
+                    <p className="text-gray-400 text-xs mt-0.5">📍 República Dominicana</p>
+                    <p className="text-blue-600 dark:text-blue-400 font-black text-lg mt-2">
+                      ${prop.price.toLocaleString()}
+                      {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
                     </p>
+                    <div className="flex gap-3 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-gray-400 text-xs">
+                      <span>🛏️ {prop.rooms}</span>
+                      <span>🛁 {prop.baths}</span>
+                      <span>🚗 {prop.parking}</span>
+                    </div>
                   </div>
-
                 </div>
               </Link>
             ))
           )}
         </div>
-
       </div>
     </div>
   );
