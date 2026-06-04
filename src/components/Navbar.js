@@ -4,6 +4,7 @@ import AuthModal from "./AuthModal";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
+import { useInbox } from "../context/InboxContext";
 
 export default function Navbar({ activeTab, onTabChange }) {
   const [authOpen, setAuthOpen] = useState(false);
@@ -14,6 +15,8 @@ export default function Navbar({ activeTab, onTabChange }) {
   const { dark, toggleDark } = useTheme();
   const { currentUser, logout } = useAuth();
   const { favorites } = useProperties();
+  const { getUnreadCount } = useInbox();
+  const unread = currentUser ? getUnreadCount(currentUser.id) : 0;
 
   const handleTabClick = (tab) => {
     if (onTabChange) {
@@ -60,8 +63,22 @@ export default function Navbar({ activeTab, onTabChange }) {
               {dark ? "☀️" : "🌙"}
             </button>
 
+            {/* INBOX */}
+            {currentUser && (
+              <Link to="/inbox">
+                <button className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 px-3 py-2 rounded-full hover:shadow-md transition">
+                  ✉️
+                  {unread > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                      {unread}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            )}
+
             {/* FAVORITOS */}
-            <Link to="/profile?tab=favoritos">
+            <Link to="/favorites">
               <button className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 px-3 py-2 rounded-full hover:shadow-md transition">
                 ❤️
                 {favorites.length > 0 && (

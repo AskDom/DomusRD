@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { PropertiesProvider } from "./context/PropertiesContext";
+import { InboxProvider } from "./context/InboxContext";
 import { AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
@@ -9,6 +10,8 @@ import Publish from "./pages/Publish";
 import PropertyDetail from "./pages/PropertyDetail";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
+import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/PageTransition";
@@ -22,6 +25,8 @@ function AnimatedRoutes() {
         <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
         <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/favorites" element={<PageTransition><Favorites /></PageTransition>} />
+        <Route path="/inbox" element={<PageTransition><Inbox /></PageTransition>} />
         <Route path="/publish" element={
           <PageTransition>
             <ProtectedRoute>
@@ -40,9 +45,11 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <PropertiesProvider>
-          <Router>
-            <AnimatedRoutes />
-          </Router>
+          <InboxProvider>
+            <Router>
+              <AnimatedRoutes />
+            </Router>
+          </InboxProvider>
         </PropertiesProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -5,6 +5,8 @@ import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import { useProperties } from "../context/PropertiesContext";
+import { useAuth } from "../context/AuthContext";
+import { useInbox } from "../context/InboxContext";
 
 // Imágenes extra por tipo de propiedad para simular galería real
 const extraImages = {
@@ -33,9 +35,13 @@ export default function PropertyDetail() {
 
   const { id } = useParams();
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
+  const { currentUser } = useAuth();
+  const { sendMessage } = useInbox();
   const property = allProperties.find((p) => p.id === Number(id));
   const [lightbox, setLightbox] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [msgText, setMsgText] = useState("");
+  const [msgSent, setMsgSent] = useState(false);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -46,6 +52,22 @@ export default function PropertyDetail() {
   const handleWhatsApp = () => {
     const msg = `🏠 *${property.title}*\n💰 $${Number(property.price).toLocaleString()}\n📍 ${property.city || "República Dominicana"}\n\n🔗 ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const handleSendMessage = () => {
+    if (!msgText.trim() || !currentUser) return;
+    sendMessage({
+      fromId: currentUser.id,
+      fromName: currentUser.name,
+      toId: property.publishedBy || "admin",
+      toName: property.publishedBy || "DomusRD",
+      propertyId: property.id,
+      propertyTitle: property.title,
+      text: msgText,
+    });
+    setMsgText("");
+    setMsgSent(true);
+    setTimeout(() => setMsgSent(false), 3000);
   };
 
   if (!property) {
@@ -230,36 +252,65 @@ export default function PropertyDetail() {
 
         {/* ── CONTACTO ── */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 transition-colors">
-          <div className="flex flex-wrap gap-4 justify-between items-start">
-            <div>
-              <h2 className="text-xl font-black text-gray-900 dark:text-white">¿Te interesa esta propiedad?</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Contacta al vendedor directamente</p>
-              {property.publishedBy && (
-                <div className="flex items-center gap-2 mt-3 bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-2.5 w-fit transition-colors">
-                  <div className="bg-blue-600 text-white w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm">
-                    {property.publishedBy.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Publicado por</p>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{property.publishedBy}</p>
-                  </div>
+          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">¿Te interesa esta propiedad?</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">Contacta al vendedor directamente</p>
+
+          {property.publishedBy && (
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 mb-5 transition-colors">
+              <div className="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center font-black">
+                {property.publishedBy.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Publicado por</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{property.publishedBy}</p>
+              </div>
+            </div>
+          )}
+
+          {/* MENSAJE AL INBOX */}
+          {currentUser ? (
+            <div className="mb-5">
+              {msgSent ? (
+                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 rounded-2xl px-4 py-3 text-sm font-semibold flex items-center gap-2">
+                  ✅ Mensaje enviado al inbox del vendedor
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <textarea
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    placeholder="Escribe tu mensaje al vendedor..."
+                    className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 placeholder-gray-400 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none h-24 transition-colors"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!msgText.trim()}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-2xl font-semibold transition"
+                  >
+                    ✉️ Enviar mensaje
+                  </button>
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-2 w-full sm:w-auto">
-              <button
-                onClick={handleWhatsApp}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
-              >
-                💬 Contactar por WhatsApp
-              </button>
-              <button
-                onClick={handleShare}
-                className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
-              >
-                {copied ? "✅ Link copiado" : "🔗 Compartir propiedad"}
-              </button>
+          ) : (
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 mb-5 text-sm text-gray-500 dark:text-gray-400 transition-colors">
+              <Link to="/" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Inicia sesión</Link> para enviar un mensaje al vendedor
             </div>
+          )}
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleWhatsApp}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
+            >
+              💬 WhatsApp
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-5 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
+            >
+              {copied ? "✅ Copiado" : "🔗 Compartir"}
+            </button>
           </div>
         </div>
 
