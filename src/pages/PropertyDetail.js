@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import properties from "../data/properties";
+import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
+import { useProperties } from "../context/PropertiesContext";
 
 // Imágenes extra por tipo de propiedad para simular galería real
 const extraImages = {
@@ -31,14 +32,31 @@ export default function PropertyDetail() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const { id } = useParams();
-  const property = properties.find((p) => p.id === Number(id));
-  const [lightbox, setLightbox] = useState(null); // índice imagen abierta
-  const [liked, setLiked] = useState(false);
+  const { allProperties, toggleFavorite, isFavorite } = useProperties();
+  const property = allProperties.find((p) => p.id === Number(id));
+  const [lightbox, setLightbox] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleWhatsApp = () => {
+    const msg = `🏠 *${property.title}*\n💰 $${Number(property.price).toLocaleString()}\n📍 ${property.city || "República Dominicana"}\n\n🔗 ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Propiedad no encontrada</p>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center text-center px-4">
+        <p className="text-6xl mb-4">🏚️</p>
+        <p className="text-2xl font-black text-gray-900 dark:text-white mb-2">Propiedad no encontrada</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Esta propiedad no existe o fue eliminada.</p>
+        <Link to="/" className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-blue-700 transition">
+          🏠 Volver al inicio
+        </Link>
       </div>
     );
   }
@@ -47,19 +65,29 @@ export default function PropertyDetail() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-
       <Navbar />
 
-      {/* BACK */}
-      <div className="max-w-6xl mx-auto px-4 pt-4">
+      {/* BACK + SHARE */}
+      <div className="max-w-6xl mx-auto px-4 pt-4 flex items-center justify-between">
         <Link to="/">
           <button className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl text-sm font-medium transition">
             ← Volver
           </button>
         </Link>
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:shadow-md transition"
+        >
+          {copied ? "✅ Copiado" : "🔗 Compartir"}
+        </button>
       </div>
 
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="max-w-6xl mx-auto p-4 md:p-6 space-y-5"
+      >
 
         {/* ── GALERÍA ── */}
         <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[420px] rounded-3xl overflow-hidden">
@@ -144,10 +172,10 @@ export default function PropertyDetail() {
               <p className="text-gray-500 dark:text-gray-400 mt-1">📍 República Dominicana</p>
             </div>
             <button
-              onClick={() => setLiked(!liked)}
+              onClick={() => toggleFavorite(property.id)}
               className="bg-gray-100 dark:bg-gray-700 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl hover:scale-110 transition-transform"
             >
-              {liked ? "❤️" : "🤍"}
+              {isFavorite(property.id) ? "❤️" : "🤍"}
             </button>
           </div>
 
@@ -201,22 +229,41 @@ export default function PropertyDetail() {
         </div>
 
         {/* ── CONTACTO ── */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 flex flex-wrap gap-4 justify-between items-center transition-colors">
-          <div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white">¿Te interesa esta propiedad?</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Contacta al vendedor directamente</p>
-          </div>
-          <div className="flex gap-3">
-            <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-2xl font-semibold transition flex items-center gap-2">
-              💬 WhatsApp
-            </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-semibold transition flex items-center gap-2">
-              📞 Llamar
-            </button>
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 transition-colors">
+          <div className="flex flex-wrap gap-4 justify-between items-start">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 dark:text-white">¿Te interesa esta propiedad?</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Contacta al vendedor directamente</p>
+              {property.publishedBy && (
+                <div className="flex items-center gap-2 mt-3 bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-2.5 w-fit transition-colors">
+                  <div className="bg-blue-600 text-white w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm">
+                    {property.publishedBy.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Publicado por</p>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{property.publishedBy}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleWhatsApp}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
+              >
+                💬 Contactar por WhatsApp
+              </button>
+              <button
+                onClick={handleShare}
+                className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
+              >
+                {copied ? "✅ Link copiado" : "🔗 Compartir propiedad"}
+              </button>
+            </div>
           </div>
         </div>
 
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import propertiesData from "../data/properties";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useProperties } from "../context/PropertiesContext";
 
@@ -9,11 +8,24 @@ const PROVINCIAS = [
   "Jarabacoa", "La Romana", "Baní", "San Cristóbal",
 ];
 
+const TAB_FILTERS = {
+  "Todos": () => true,
+  "Apartamentos": (p) => p.type === "Apartamento",
+  "Casas": (p) => p.type === "Casa",
+  "Villas": (p) => p.type === "Villa",
+  "En Venta": (p) => p.status === "Venta",
+  "En Renta": (p) => p.status === "Renta",
+};
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
+
+  const activeTab = searchParams.get("tab") || "Todos";
+  const filtered = allProperties.filter(TAB_FILTERS[activeTab] || (() => true));
 
   useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
 
@@ -23,9 +35,13 @@ export default function Home() {
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
   };
 
+  const handleTabChange = (tab) => {
+    navigate(tab === "Todos" ? "/" : `/?tab=${encodeURIComponent(tab)}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <Navbar />
+      <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* ── HERO ── */}
       <div className="relative h-[420px] overflow-hidden">
@@ -35,7 +51,6 @@ export default function Home() {
           className="w-full h-full object-cover object-[center_60%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/75" />
-
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
           <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-5 uppercase tracking-widest">
             República Dominicana
@@ -46,8 +61,6 @@ export default function Home() {
           <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg">
             Miles de propiedades en venta y renta en todo el país
           </p>
-
-          {/* SEARCH BAR */}
           <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-2 flex gap-2">
             <input
               type="text"
@@ -57,29 +70,18 @@ export default function Home() {
               placeholder="🔍  Busca por ciudad, sector o provincia..."
               className="flex-1 px-4 py-3 outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm"
             />
-            <button
-              onClick={() => handleSearch()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shrink-0"
-            >
+            <button onClick={() => handleSearch()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shrink-0">
               Buscar
             </button>
           </div>
-
-          {/* SUGERENCIAS RÁPIDAS */}
           <div className="flex flex-wrap gap-2 mt-4 justify-center">
             {PROVINCIAS.map((p) => (
-              <button
-                key={p}
-                onClick={() => handleSearch(p)}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs px-3 py-1.5 rounded-full border border-white/30 transition"
-              >
+              <button key={p} onClick={() => handleSearch(p)} className="bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs px-3 py-1.5 rounded-full border border-white/30 transition">
                 {p}
               </button>
             ))}
           </div>
         </div>
-
-        {/* STATS */}
         <div className="absolute bottom-5 right-6 hidden md:flex gap-6 text-white">
           {[["2,400+", "Propiedades"], ["180+", "Agentes"], ["12", "Ciudades"]].map(([n, l]) => (
             <div key={l} className="text-center">
@@ -90,17 +92,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── PROPIEDADES DESTACADAS ── */}
+      {/* ── FEED ── */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white">Propiedades destacadas</h2>
-            <p className="text-gray-400 text-sm mt-0.5">{allProperties.length} propiedades disponibles</p>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+              {activeTab === "Todos" ? "Propiedades destacadas" : activeTab}
+            </h2>
+            <p className="text-gray-400 text-sm mt-0.5">{filtered.length} propiedades disponibles</p>
           </div>
-          <button
-            onClick={() => handleSearch("República Dominicana")}
-            className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline"
-          >
+          <button onClick={() => handleSearch("República Dominicana")} className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline">
             Ver todas →
           </button>
         </div>
@@ -117,25 +118,20 @@ export default function Home() {
                 </div>
               </div>
             ))
+          ) : filtered.length === 0 ? (
+            <div className="col-span-full text-center py-20">
+              <p className="text-5xl mb-4">🏚️</p>
+              <p className="text-gray-500 dark:text-gray-400 font-semibold text-lg">No hay propiedades en esta categoría</p>
+            </div>
           ) : (
-            allProperties.map((prop) => (
+            filtered.map((prop) => (
               <Link key={prop.id} to={`/property/${prop.id}`}>
                 <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-transparent dark:border-gray-700">
                   <div className="relative overflow-hidden">
-                    <img
-                      src={prop.image}
-                      alt={prop.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    <img src={prop.image} alt={prop.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute top-3 left-3 flex gap-2">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${
-                        prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
-                      }`}>
-                        {prop.status}
-                      </span>
-                      <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">
-                        {prop.type}
-                      </span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"}`}>{prop.status}</span>
+                      <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">{prop.type}</span>
                     </div>
                     <button
                       onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}

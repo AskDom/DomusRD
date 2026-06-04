@@ -1,12 +1,39 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { PropertiesProvider } from "./context/PropertiesContext";
+import { AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
 import Publish from "./pages/Publish";
 import PropertyDetail from "./pages/PropertyDetail";
 import SearchResults from "./pages/SearchResults";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PageTransition from "./components/PageTransition";
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+        <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
+        <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/publish" element={
+          <PageTransition>
+            <ProtectedRoute>
+              <Publish />
+            </ProtectedRoute>
+          </PageTransition>
+        } />
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function App() {
   return (
@@ -14,12 +41,7 @@ function App() {
       <AuthProvider>
         <PropertiesProvider>
           <Router>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<SearchResults />} />
-              <Route path="/publish" element={<Publish />} />
-              <Route path="/property/:id" element={<PropertyDetail />} />
-            </Routes>
+            <AnimatedRoutes />
           </Router>
         </PropertiesProvider>
       </AuthProvider>
