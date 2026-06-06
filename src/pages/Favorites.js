@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 
@@ -128,6 +129,7 @@ export default function Favorites() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

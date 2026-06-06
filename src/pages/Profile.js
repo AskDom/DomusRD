@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 
@@ -71,8 +72,16 @@ export default function Profile() {
           <div className="flex-1">
             <h1 className="text-2xl font-black text-gray-900 dark:text-white">{currentUser.name}</h1>
             <p className="text-gray-400 text-sm">{currentUser.email}</p>
-            <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full mt-1 inline-block">
-              {currentUser.role}
+            <span className={`text-xs font-bold px-3 py-1 rounded-full mt-1 inline-block ${
+              currentUser.role === "Agente"
+                ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
+                : currentUser.role === "Vendedor"
+                ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                : "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+            }`}>
+              {currentUser.role === "Agente" ? "⭐ Agente" :
+               currentUser.role === "Vendedor" ? "🏠 Vendedor" :
+               "👤 Cliente"}
             </span>
           </div>
           <button
@@ -252,6 +261,7 @@ export default function Profile() {
         )}
 
       </div>
+      <Footer />
     </div>
   );
 }

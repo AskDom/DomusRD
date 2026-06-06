@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
 
@@ -196,6 +197,7 @@ export default function Inbox() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

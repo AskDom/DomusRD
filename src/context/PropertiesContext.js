@@ -8,7 +8,6 @@ export function PropertiesProvider({ children }) {
   const [published, setPublished] = useLocalStorage("domusrd-properties", []);
   const [favorites, setFavorites] = useLocalStorage("domusrd-favorites", []);
 
-  // Combina mock data + propiedades publicadas por usuarios
   const allProperties = [...mockProperties, ...published];
 
   const addProperty = (property) => {
@@ -17,22 +16,37 @@ export function PropertiesProvider({ children }) {
     return newProp;
   };
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+  const updateProperty = (id, updates) => {
+    setPublished((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
     );
   };
 
-  const isFavorite = (id) => favorites.includes(id);
+  const deleteProperty = (id) => {
+    setPublished((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const toggleFavorite = (id) => {
+    const numId = Number(id);
+    setFavorites((prev) =>
+      prev.includes(numId) ? prev.filter((f) => f !== numId) : [...prev, numId]
+    );
+  };
+
+  const isFavorite = (id) => favorites.includes(Number(id));
+
+  const getUserProperties = (userId) =>
+    published.filter((p) => p.publishedById === userId);
+
+  const getFavoriteProperties = () =>
+    allProperties.filter((p) => favorites.includes(Number(p.id)));
 
   return (
     <PropertiesContext.Provider value={{
-      allProperties,
-      published,
-      favorites,
-      addProperty,
-      toggleFavorite,
-      isFavorite,
+      allProperties, published, favorites,
+      addProperty, updateProperty, deleteProperty,
+      toggleFavorite, isFavorite,
+      getUserProperties, getFavoriteProperties,
     }}>
       {children}
     </PropertiesContext.Provider>

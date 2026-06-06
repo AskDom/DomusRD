@@ -30,29 +30,22 @@ const selectClass =
 export default function Publish() {
   const { allProperties, addProperty } = useProperties();
   const { currentUser } = useAuth();
+
+  const isVendedor = currentUser?.role === "Vendedor";
+  const myPublished = allProperties.filter((p) => p.publishedById === currentUser?.id);
+  const vendedorLimit = 3;
+  const hasReachedLimit = isVendedor && myPublished.length >= vendedorLimit;
   const [position, setPosition] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
+
   const [form, setForm] = useState({
-      title: "",
-      price: "",
-      description: "",
-      type: "Apartamento",
-      status: "Venta",
+    title: "", price: "", description: "",
+    type: "Apartamento", status: "Venta",
+    rooms: 1, baths: 1, parking: 1,
+    city: "", image: "", lat: "", lng: "",
+  });
 
-      city: "",
-      sector: "",
-      area: "",
-      phone: "",
-      email: "",
-
-      rooms: 1,
-      baths: 1,
-      parking: 1,
-
-      image: "",
-      lat: "",
-      lng: "",
-    });
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -63,37 +56,25 @@ export default function Publish() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    let lat = position?.lat;
-    let lng = position?.lng;
-    if (!lat || !lng) return alert("Selecciona una ubicación en el mapa");
+    const errs = {};
+    if (!form.title.trim()) errs.title = "El título es requerido";
+    if (!form.city.trim()) errs.city = "La ciudad es requerida";
+    if (!form.price) errs.price = "El precio es requerido";
+    if (!form.description.trim()) errs.description = "La descripción es requerida";
+    if (!position) errs.position = "Selecciona una ubicación en el mapa";
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
+    if (hasReachedLimit) return;
     addProperty({
       ...form,
-      lat,
-      lng,
+      lat: position.lat,
+      lng: position.lng,
       liked: false,
+      city: form.city,
+      publishedById: currentUser?.id || null,
       publishedBy: currentUser?.name || "Anónimo",
     });
-    setForm({
-      title: "",
-      price: "",
-      description: "",
-      type: "Apartamento",
-      status: "Venta",
-
-      city: "",
-      sector: "",
-      area: "",
-      phone: "",
-      email: "",
-
-      rooms: 1,
-      baths: 1,
-      parking: 1,
-
-      image: "",
-      lat: "",
-      lng: "",
-    });
+    setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, image: "", city: "", lat: "", lng: "" });
     setPosition(null);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
@@ -136,6 +117,9 @@ export default function Publish() {
               </Marker>
             )}
           </MapContainer>
+          {errors.position && (
+            <p className="text-red-500 text-sm mt-2 font-medium">⚠️ {errors.position}</p>
+          )}
         </div>
 
         {/* FORMULARIO — ABAJO EN GRID */}
@@ -143,6 +127,31 @@ export default function Publish() {
           onSubmit={handleSubmit}
           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-3xl p-6 md:p-8 transition-colors duration-300"
         >
+          {/* LÍMITE VENDEDOR */}
+          {isVendedor && (
+            <div className={`mb-4 rounded-2xl px-5 py-3 flex items-center justify-between ${
+              hasReachedLimit
+                ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
+            }`}>
+              <div>
+                <p className={`text-sm font-bold ${hasReachedLimit ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"}`}>
+                  {hasReachedLimit ? "⚠️ Límite alcanzado" : "🏠 Cupo de publicaciones"}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {hasReachedLimit
+                    ? "Has alcanzado el límite de 3 propiedades para Vendedor. Elimina una para publicar otra."
+                    : `Has publicado ${myPublished.length} de ${vendedorLimit} propiedades permitidas.`}
+                </p>
+              </div>
+              <div className="text-right shrink-0 ml-4">
+                <p className={`text-2xl font-black ${hasReachedLimit ? "text-red-500" : "text-blue-600 dark:text-blue-400"}`}>
+                  {myPublished.length}/{vendedorLimit}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* SUCCESS BANNER */}
           {submitted && (
             <div className="mb-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 rounded-2xl px-5 py-4 font-semibold flex items-center gap-2">
@@ -159,9 +168,21 @@ export default function Publish() {
                 placeholder="Ej. Apartamento moderno en Piantini"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className={inputClass}
-                required
+                className={`${inputClass} ${errors.title ? "ring-2 ring-red-400" : ""}`}
               />
+              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+            </div>
+
+            {/* CIUDAD */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Ciudad / Sector</label>
+              <input
+                placeholder="Ej. Santo Domingo"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                className={`${inputClass} ${errors.city ? "ring-2 ring-red-400" : ""}`}
+              />
+              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
             </div>
 
             {/* PRECIO */}
@@ -172,90 +193,10 @@ export default function Publish() {
                 placeholder="Ej. 150000"
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
-                className={inputClass}
-                required
+                className={`${inputClass} ${errors.price ? "ring-2 ring-red-400" : ""}`}
               />
+              {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
             </div>
-                        {/* CIUDAD */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
-                Ciudad
-              </label>
-
-              <input
-                value={form.city}
-                onChange={(e) =>
-                  setForm({ ...form, city: e.target.value })
-                }
-                placeholder="Ej. Santo Domingo"
-                className={inputClass}
-              />
-            </div>
-
-            {/* SECTOR */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
-                Sector
-              </label>
-
-              <input
-                value={form.sector}
-                onChange={(e) =>
-                  setForm({ ...form, sector: e.target.value })
-                }
-                placeholder="Ej. Piantini"
-                className={inputClass}
-              />
-            </div>
-
-            {/* METROS */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
-                Metros cuadrados
-              </label>
-
-              <input
-                type="number"
-                value={form.area}
-                onChange={(e) =>
-                  setForm({ ...form, area: e.target.value })
-                }
-                placeholder="Ej. 145"
-                className={inputClass}
-              />
-            </div>
-        {/* TELEFONO */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
-                  Teléfono
-                </label>
-
-                <input
-                  value={form.phone}
-                  onChange={(e) =>
-                    setForm({ ...form, phone: e.target.value })
-                  }
-                  placeholder="809-555-5555"
-                  className={inputClass}
-                />
-              </div>
-
-              {/* EMAIL */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
-                  Correo
-                </label>
-
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
-                  placeholder="correo@email.com"
-                  className={inputClass}
-                />
-              </div>
 
             {/* STATUS */}
             <div>
@@ -322,7 +263,8 @@ export default function Publish() {
           <div className="mt-6 flex items-center gap-4">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition text-base"
+              disabled={hasReachedLimit}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition text-base"
             >
               🚀 Publicar propiedad
             </button>

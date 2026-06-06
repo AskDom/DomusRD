@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useProperties } from "../context/PropertiesContext";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -202,6 +203,7 @@ export default function SearchResults() {
         </div>
 
       </div>
+      <Footer />
     </div>
   );
 }

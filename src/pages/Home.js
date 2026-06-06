@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import PropertyImage from "../components/PropertyImage";
 import { useProperties } from "../context/PropertiesContext";
 
 const PROVINCIAS = [
@@ -17,15 +20,32 @@ const TAB_FILTERS = {
   "En Renta": (p) => p.status === "Renta",
 };
 
+const SORT_OPTIONS = [
+  { value: "recent", label: "Más recientes" },
+  { value: "price_asc", label: "Menor precio" },
+  { value: "price_desc", label: "Mayor precio" },
+];
+
+function sortProperties(props, sort) {
+  const arr = [...props];
+  if (sort === "price_asc") return arr.sort((a, b) => a.price - b.price);
+  if (sort === "price_desc") return arr.sort((a, b) => b.price - a.price);
+  return arr.sort((a, b) => (b.id > a.id ? 1 : -1));
+}
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("recent");
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
 
   const activeTab = searchParams.get("tab") || "Todos";
-  const filtered = allProperties.filter(TAB_FILTERS[activeTab] || (() => true));
+  const filtered = sortProperties(
+    allProperties.filter(TAB_FILTERS[activeTab] || (() => true)),
+    sort
+  );
 
   useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
 
@@ -94,71 +114,114 @@ export default function Home() {
 
       {/* ── FEED ── */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-10">
-        <div className="flex items-center justify-between mb-6">
+
+        {/* HEADER + ORDENAR */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">
               {activeTab === "Todos" ? "Propiedades destacadas" : activeTab}
             </h2>
             <p className="text-gray-400 text-sm mt-0.5">{filtered.length} propiedades disponibles</p>
           </div>
-          <button onClick={() => handleSearch("República Dominicana")} className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline">
-            Ver todas →
-          </button>
+          <div className="flex items-center gap-3">
+            {/* ORDENAR */}
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-sm"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => handleSearch("República Dominicana")}
+              className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline whitespace-nowrap"
+            >
+              Ver todas →
+            </button>
+          </div>
         </div>
 
+        {/* GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading ? (
             [...Array(8)].map((_, i) => (
               <div key={i} className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-300 dark:bg-gray-700" />
+                <div className="h-48 bg-gray-200 dark:bg-gray-700" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3" />
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded w-1/2" />
+                  <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded w-1/3" />
                 </div>
               </div>
             ))
           ) : filtered.length === 0 ? (
-            <div className="col-span-full text-center py-20">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="col-span-full text-center py-20"
+            >
               <p className="text-5xl mb-4">🏚️</p>
               <p className="text-gray-500 dark:text-gray-400 font-semibold text-lg">No hay propiedades en esta categoría</p>
-            </div>
+              <button onClick={() => handleTabChange("Todos")} className="mt-4 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline">
+                Ver todas las propiedades
+              </button>
+            </motion.div>
           ) : (
-            filtered.map((prop) => (
-              <Link key={prop.id} to={`/property/${prop.id}`}>
-                <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-transparent dark:border-gray-700">
-                  <div className="relative overflow-hidden">
-                    <img src={prop.image} alt={prop.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute top-3 left-3 flex gap-2">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"}`}>{prop.status}</span>
-                      <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">{prop.type}</span>
+            filtered.map((prop, i) => (
+              <motion.div
+                key={prop.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04, duration: 0.3 }}
+              >
+                <Link to={`/property/${prop.id}`}>
+                  <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 h-full">
+                    <div className="relative overflow-hidden">
+                      <PropertyImage
+                        src={prop.image}
+                        type={prop.type}
+                        alt={prop.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"}`}>
+                          {prop.status}
+                        </span>
+                        <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">
+                          {prop.type}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
+                        className="absolute top-3 right-3 bg-white dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform text-sm"
+                      >
+                        {isFavorite(prop.id) ? "❤️" : "🤍"}
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
-                      className="absolute top-3 right-3 bg-white dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform text-sm"
-                    >
-                      {isFavorite(prop.id) ? "❤️" : "🤍"}
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
-                    <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "República Dominicana"}</p>
-                    <p className="text-blue-600 dark:text-blue-400 font-black text-lg mt-2">
-                      ${prop.price.toLocaleString()}
-                      {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
-                    </p>
-                    <div className="flex gap-3 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-gray-400 text-xs">
-                      <span>🛏️ {prop.rooms}</span>
-                      <span>🛁 {prop.baths}</span>
-                      <span>🚗 {prop.parking}</span>
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
+                      <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "República Dominicana"}</p>
+                      <p className="text-blue-600 dark:text-blue-400 font-black text-lg mt-2">
+                        ${Number(prop.price).toLocaleString()}
+                        {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
+                      </p>
+                      <div className="flex gap-3 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-400 text-xs">
+                        <span>🛏️ {prop.rooms}</span>
+                        <span>🛁 {prop.baths}</span>
+                        <span>🚗 {prop.parking}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))
           )}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
