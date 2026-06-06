@@ -32,14 +32,27 @@ export default function Publish() {
   const { currentUser } = useAuth();
   const [position, setPosition] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-
   const [form, setForm] = useState({
-    title: "", price: "", description: "",
-    type: "Apartamento", status: "Venta",
-    rooms: 1, baths: 1, parking: 1,
-    image: "", lat: "", lng: "",
-  });
+      title: "",
+      price: "",
+      description: "",
+      type: "Apartamento",
+      status: "Venta",
 
+      city: "",
+      sector: "",
+      area: "",
+      phone: "",
+      email: "",
+
+      rooms: 1,
+      baths: 1,
+      parking: 1,
+
+      image: "",
+      lat: "",
+      lng: "",
+    });
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -58,10 +71,29 @@ export default function Publish() {
       lat,
       lng,
       liked: false,
-      city: form.title,
       publishedBy: currentUser?.name || "Anónimo",
     });
-    setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, image: "", lat: "", lng: "" });
+    setForm({
+      title: "",
+      price: "",
+      description: "",
+      type: "Apartamento",
+      status: "Venta",
+
+      city: "",
+      sector: "",
+      area: "",
+      phone: "",
+      email: "",
+
+      rooms: 1,
+      baths: 1,
+      parking: 1,
+
+      image: "",
+      lat: "",
+      lng: "",
+    });
     setPosition(null);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
@@ -144,6 +176,86 @@ export default function Publish() {
                 required
               />
             </div>
+                        {/* CIUDAD */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                Ciudad
+              </label>
+
+              <input
+                value={form.city}
+                onChange={(e) =>
+                  setForm({ ...form, city: e.target.value })
+                }
+                placeholder="Ej. Santo Domingo"
+                className={inputClass}
+              />
+            </div>
+
+            {/* SECTOR */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                Sector
+              </label>
+
+              <input
+                value={form.sector}
+                onChange={(e) =>
+                  setForm({ ...form, sector: e.target.value })
+                }
+                placeholder="Ej. Piantini"
+                className={inputClass}
+              />
+            </div>
+
+            {/* METROS */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                Metros cuadrados
+              </label>
+
+              <input
+                type="number"
+                value={form.area}
+                onChange={(e) =>
+                  setForm({ ...form, area: e.target.value })
+                }
+                placeholder="Ej. 145"
+                className={inputClass}
+              />
+            </div>
+        {/* TELEFONO */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                  Teléfono
+                </label>
+
+                <input
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm({ ...form, phone: e.target.value })
+                  }
+                  placeholder="809-555-5555"
+                  className={inputClass}
+                />
+              </div>
+
+              {/* EMAIL */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                  Correo
+                </label>
+
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm({ ...form, email: e.target.value })
+                  }
+                  placeholder="correo@email.com"
+                  className={inputClass}
+                />
+              </div>
 
             {/* STATUS */}
             <div>

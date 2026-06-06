@@ -90,7 +90,7 @@ export default function PropertyDetail() {
       <Navbar />
 
       {/* BACK + SHARE */}
-      <div className="max-w-6xl mx-auto px-4 pt-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 pt-4 flex items-center justify-between">
         <Link to="/">
           <button className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl text-sm font-medium transition">
             ← Volver
@@ -108,11 +108,11 @@ export default function PropertyDetail() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="max-w-6xl mx-auto p-4 md:p-6 space-y-5"
+        className="max-w-7xl mx-auto p-4 md:p-6 space-y-5"
       >
 
         {/* ── GALERÍA ── */}
-        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[420px] rounded-3xl overflow-hidden">
+        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[550px] rounded-3xl overflow-hidden">
           {/* Foto principal grande */}
           <div
             className="col-span-2 row-span-2 cursor-pointer overflow-hidden"
@@ -205,6 +205,9 @@ export default function PropertyDetail() {
             ${property.price?.toLocaleString()}
             {property.status === "Renta" && <span className="text-base font-normal text-gray-400 ml-1">/mes</span>}
           </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Publicado hace 2 días
+            </p>
 
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
@@ -240,9 +243,9 @@ export default function PropertyDetail() {
         </div>
 
         {/* ── MAPA ── */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 overflow-hidden">
           <h2 className="text-xl font-black mb-4 text-gray-900 dark:text-white">Ubicación</h2>
-          <MapContainer center={[property.lat, property.lng]} zoom={14} className="h-[350px] rounded-2xl">
+          <MapContainer center={[property.lat, property.lng]} zoom={14} className="h-[520px]  rounded-2xl">
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <Marker position={[property.lat, property.lng]}>
               <Popup>{property.title}</Popup>
