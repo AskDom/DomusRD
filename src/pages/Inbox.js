@@ -14,11 +14,21 @@ function timeAgo(iso) {
   return `${Math.floor(diff / 86400)}d`;
 }
 
+function Avatar({ name, size = "md" }) {
+  const s = size === "sm" ? "w-7 h-7 text-xs rounded-lg" : "w-10 h-10 text-sm rounded-xl";
+  return (
+    <div className={`${s} bg-blue-600 text-white flex items-center justify-center font-black shrink-0 shadow-sm`}>
+      {name?.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export default function Inbox() {
   const { currentUser } = useAuth();
-  const { getInbox, getSent, markAsRead, deleteMessage, getUnreadCount } = useInbox();
-  const [tab, setTab] = useState("recibidos");
+  const { getConversations, markAsRead, deleteMessage, replyMessage } = useInbox();
   const [selected, setSelected] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [replySent, setReplySent] = useState(false);
 
   if (!currentUser) {
     return (
@@ -35,14 +45,37 @@ export default function Inbox() {
     );
   }
 
-  const inbox = getInbox(currentUser.id);
-  const sent = getSent(currentUser.id);
-  const unread = getUnreadCount(currentUser.id);
-  const messages = tab === "recibidos" ? inbox : sent;
+  const conversations = getConversations(currentUser.id);
+  const selectedConv = selected
+    ? conversations.find((c) => c.key === selected)
+    : null;
 
-  const handleSelect = (msg) => {
-    setSelected(msg);
-    if (!msg.read && msg.toId === currentUser.id) markAsRead(msg.id);
+  const handleSelect = (conv) => {
+    setSelected(conv.key);
+    setReplyText("");
+    setReplySent(false);
+    conv.messages
+      .filter((m) => m.toId === currentUser.id && !m.read)
+      .forEach((m) => markAsRead(m.id));
+  };
+
+  const handleReply = () => {
+    if (!replyText.trim() || !selectedConv) return;
+    const lastMsg = selectedConv.messages[selectedConv.messages.length - 1];
+    replyMessage({
+      originalMsg: lastMsg,
+      fromId: currentUser.id,
+      fromName: currentUser.name,
+      text: replyText,
+    });
+    setReplyText("");
+    setReplySent(true);
+    setTimeout(() => setReplySent(false), 2000);
+  };
+
+  const handleDelete = (id) => {
+    deleteMessage(id);
+    if (selectedConv?.messages.length <= 1) setSelected(null);
   };
 
   return (
@@ -52,149 +85,171 @@ export default function Inbox() {
       <div className="max-w-5xl mx-auto px-4 py-8">
 
         {/* HEADER */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-            Inbox
-            {unread > 0 && (
-              <span className="bg-red-500 text-white text-sm px-2.5 py-1 rounded-full font-bold">{unread}</span>
-            )}
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">Mensajes sobre tus propiedades</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+              Inbox
+              {conversations.reduce((acc, c) => acc + c.unread, 0) > 0 && (
+                <span className="bg-red-500 text-white text-sm px-2.5 py-1 rounded-full font-bold">
+                  {conversations.reduce((acc, c) => acc + c.unread, 0)}
+                </span>
+              )}
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">
+              {conversations.length === 0 ? "No tienes mensajes" : `${conversations.length} conversación${conversations.length !== 1 ? "es" : ""}`}
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* LISTA DE MENSAJES */}
-          <div className="lg:col-span-1">
-
-            {/* TABS */}
-            <div className="flex bg-white dark:bg-gray-800 rounded-2xl p-1 shadow mb-3 transition-colors">
-              <button
-                onClick={() => { setTab("recibidos"); setSelected(null); }}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-1.5 ${tab === "recibidos" ? "bg-blue-600 text-white shadow" : "text-gray-500 dark:text-gray-400"}`}
-              >
-                📥 Recibidos
-                {unread > 0 && <span className="bg-red-500 text-white text-xs px-1.5 rounded-full">{unread}</span>}
-              </button>
-              <button
-                onClick={() => { setTab("enviados"); setSelected(null); }}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${tab === "enviados" ? "bg-blue-600 text-white shadow" : "text-gray-500 dark:text-gray-400"}`}
-              >
-                📤 Enviados
-              </button>
-            </div>
-
-            {/* LISTA */}
-            <div className="space-y-2">
-              {messages.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow transition-colors">
-                  <p className="text-3xl mb-2">{tab === "recibidos" ? "📭" : "📤"}</p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                    {tab === "recibidos" ? "No tienes mensajes recibidos" : "No has enviado mensajes"}
-                  </p>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    onClick={() => handleSelect(msg)}
-                    className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow cursor-pointer hover:shadow-md transition-all border-2 ${
-                      selected?.id === msg.id
-                        ? "border-blue-500"
-                        : "border-transparent dark:border-gray-700"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="bg-blue-600 text-white w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
-                          {(tab === "recibidos" ? msg.fromName : msg.toName).charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                            {tab === "recibidos" ? msg.fromName : msg.toName}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate">{msg.propertyTitle}</p>
-                        </div>
+          {/* LISTA DE CONVERSACIONES */}
+          <div className="lg:col-span-1 space-y-2">
+            {conversations.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-md border border-gray-200 dark:border-gray-700">
+                <p className="text-4xl mb-3">📭</p>
+                <p className="text-gray-500 dark:text-gray-400 font-semibold text-sm">No tienes mensajes aún</p>
+                <p className="text-gray-400 text-xs mt-1">Los mensajes de tus propiedades aparecerán aquí</p>
+              </div>
+            ) : (
+              conversations.map((conv) => (
+                <motion.div
+                  key={conv.key}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => handleSelect(conv)}
+                  className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md cursor-pointer hover:shadow-lg transition-all border-2 ${
+                    selected === conv.key
+                      ? "border-blue-500"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar name={conv.otherName} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{conv.otherName}</p>
+                        <p className="text-xs text-gray-400 shrink-0">{timeAgo(conv.messages[0].createdAt)}</p>
                       </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <p className="text-xs text-gray-400">{timeAgo(msg.createdAt)}</p>
-                        {!msg.read && tab === "recibidos" && (
-                          <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
-                        )}
-                      </div>
+                      <p className="text-xs text-blue-500 dark:text-blue-400 truncate mt-0.5">🏠 {conv.propertyTitle}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                        {conv.messages[conv.messages.length - 1].text}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">{msg.text}</p>
-                  </motion.div>
-                ))
-              )}
-            </div>
+                    {conv.unread > 0 && (
+                      <span className="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shrink-0">
+                        {conv.unread}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
 
-          {/* DETALLE DEL MENSAJE */}
+          {/* DETALLE CONVERSACIÓN */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {selected ? (
+              {selectedConv ? (
                 <motion.div
-                  key={selected.id}
+                  key={selectedConv.key}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-6 transition-colors"
+                  exit={{ opacity: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col"
+                  style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
                 >
-                  {/* HEADER MENSAJE */}
-                  <div className="flex items-start justify-between mb-5 pb-5 border-b border-gray-100 dark:border-gray-700">
+                  {/* HEADER CONVERSACIÓN */}
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="bg-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg">
-                        {(tab === "recibidos" ? selected.fromName : selected.toName).charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar name={selectedConv.otherName} />
                       <div>
-                        <p className="font-bold text-gray-900 dark:text-white">
-                          {tab === "recibidos" ? selected.fromName : selected.toName}
-                        </p>
-                        <p className="text-xs text-gray-400">{new Date(selected.createdAt).toLocaleString("es-DO")}</p>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{selectedConv.otherName}</p>
+                        <Link to={`/property/${selectedConv.propertyId}`} className="text-xs text-blue-500 hover:underline">
+                          🏠 {selectedConv.propertyTitle}
+                        </Link>
                       </div>
                     </div>
-                    <button
-                      onClick={() => { deleteMessage(selected.id); setSelected(null); }}
-                      className="text-red-400 hover:text-red-600 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-xl transition"
-                    >
-                      🗑️ Eliminar
-                    </button>
                   </div>
 
-                  {/* PROPIEDAD */}
-                  {selected.propertyId && (
-                    <Link to={`/property/${selected.propertyId}`}>
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition">
-                        <span className="text-2xl">🏠</span>
-                        <div>
-                          <p className="text-xs text-blue-500 font-semibold uppercase tracking-wide">Propiedad relacionada</p>
-                          <p className="text-sm font-bold text-blue-700 dark:text-blue-300">{selected.propertyTitle}</p>
-                        </div>
-                        <span className="ml-auto text-blue-400 text-sm">→</span>
-                      </div>
-                    </Link>
-                  )}
+                  {/* MENSAJES */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {[...selectedConv.messages]
+                      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+                      .map((msg) => {
+                        const isMe = msg.fromId === currentUser.id;
+                        return (
+                          <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                            <Avatar name={msg.fromName} size="sm" />
+                            <div className={`max-w-[75%] group`}>
+                              <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                                isMe
+                                  ? "bg-blue-600 text-white rounded-tr-sm"
+                                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-sm"
+                              }`}>
+                                {msg.text}
+                              </div>
+                              <div className={`flex items-center gap-2 mt-1 ${isMe ? "justify-end" : "justify-start"}`}>
+                                <p className="text-xs text-gray-400">{timeAgo(msg.createdAt)}</p>
+                                <button
+                                  onClick={() => handleDelete(msg.id)}
+                                  className="text-xs text-gray-300 hover:text-red-400 transition opacity-0 group-hover:opacity-100"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
 
-                  {/* TEXTO */}
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-5 transition-colors">
-                    <p className="text-gray-700 dark:text-gray-200 leading-7 whitespace-pre-wrap">{selected.text}</p>
+                  {/* REPLY BOX */}
+                  <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+                    {replySent ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 rounded-xl px-4 py-2.5 text-sm font-semibold text-center"
+                      >
+                        ✅ Mensaje enviado
+                      </motion.div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleReply()}
+                          placeholder={`Responder a ${selectedConv.otherName}...`}
+                          className="flex-1 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        />
+                        <button
+                          onClick={handleReply}
+                          disabled={!replyText.trim()}
+                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl font-semibold transition text-sm"
+                        >
+                          Enviar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ) : (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-12 text-center h-full flex flex-col items-center justify-center transition-colors"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center p-12"
+                  style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
                 >
                   <p className="text-5xl mb-4">✉️</p>
-                  <p className="text-gray-500 dark:text-gray-400 font-semibold">Selecciona un mensaje para leerlo</p>
+                  <p className="text-gray-500 dark:text-gray-400 font-semibold">Selecciona una conversación</p>
+                  <p className="text-gray-400 text-sm mt-1">para leer y responder mensajes</p>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+
         </div>
       </div>
       <Footer />

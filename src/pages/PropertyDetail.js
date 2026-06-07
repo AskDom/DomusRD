@@ -74,7 +74,7 @@ export default function PropertyDetail() {
     sendMessage({
       fromId: currentUser.id,
       fromName: currentUser.name,
-      toId: property.publishedBy || "admin",
+      toId: property.publishedById || "admin",
       toName: property.publishedBy || "DomusRD",
       propertyId: property.id,
       propertyTitle: property.title,
