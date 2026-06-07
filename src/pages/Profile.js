@@ -18,7 +18,7 @@ export default function Profile() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <div className="min-h-screen bg-gray-200 dark:bg-gray-900 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <p className="text-6xl mb-4">🔒</p>
@@ -59,13 +59,13 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
 
         {/* HEADER PERFIL */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 mb-6 flex items-center gap-5 transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-6 mb-6 flex items-center gap-5 transition-colors">
           <div className="bg-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black shadow-lg">
             {currentUser.name.charAt(0).toUpperCase()}
           </div>
@@ -119,7 +119,7 @@ export default function Profile() {
         {activeTab === "propiedades" && (
           <div>
             {myProperties.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl shadow transition-colors">
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl shadow-md transition-colors">
                 <p className="text-5xl mb-3">🏚️</p>
                 <p className="text-gray-500 dark:text-gray-400 font-semibold">No has publicado ninguna propiedad aún</p>
                 <Link to="/publish" className="mt-4 inline-block bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-blue-700 transition">
@@ -129,7 +129,7 @@ export default function Profile() {
             ) : (
               <div className="space-y-4">
                 {myProperties.map((prop) => (
-                  <div key={prop.id} className="bg-white dark:bg-gray-800 rounded-3xl shadow overflow-hidden transition-colors">
+                  <div key={prop.id} className="bg-white dark:bg-gray-800 rounded-3xl shadow-md overflow-hidden transition-colors">
 
                     {/* MODAL CONFIRMACIÓN BORRAR */}
                     {confirmDelete === prop.id && (
@@ -202,7 +202,7 @@ export default function Profile() {
         {activeTab === "favoritos" && (
           <div>
             {favoriteProperties.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl shadow transition-colors">
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl shadow-md transition-colors">
                 <p className="text-5xl mb-3">💔</p>
                 <p className="text-gray-500 dark:text-gray-400 font-semibold">No tienes propiedades guardadas aún</p>
                 <Link to="/" className="mt-4 inline-block bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-blue-700 transition">
@@ -237,7 +237,7 @@ export default function Profile() {
 
         {/* ── MI CUENTA ── */}
         {activeTab === "cuenta" && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 space-y-4 transition-colors">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-6 space-y-4 transition-colors">
             <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">Información de cuenta</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[

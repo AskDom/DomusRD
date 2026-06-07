@@ -13,7 +13,7 @@ export default function Favorites() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <div className="min-h-screen bg-gray-200 dark:bg-gray-900 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <p className="text-6xl mb-4">🔒</p>
@@ -27,7 +27,7 @@ export default function Favorites() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300">
       <Navbar />
 
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-8">

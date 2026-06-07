@@ -7,7 +7,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300 flex flex-col">
       <Navbar />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">

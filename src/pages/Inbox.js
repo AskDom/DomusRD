@@ -22,7 +22,7 @@ export default function Inbox() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <div className="min-h-screen bg-gray-200 dark:bg-gray-900 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <p className="text-6xl mb-4">🔒</p>
@@ -46,7 +46,7 @@ export default function Inbox() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -141,7 +141,7 @@ export default function Inbox() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white dark:bg-gray-800 rounded-3xl shadow p-6 transition-colors"
+                  className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-6 transition-colors"
                 >
                   {/* HEADER MENSAJE */}
                   <div className="flex items-start justify-between mb-5 pb-5 border-b border-gray-100 dark:border-gray-700">
@@ -187,7 +187,7 @@ export default function Inbox() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-white dark:bg-gray-800 rounded-3xl shadow p-12 text-center h-full flex flex-col items-center justify-center transition-colors"
+                  className="bg-white dark:bg-gray-800 rounded-3xl shadow-md p-12 text-center h-full flex flex-col items-center justify-center transition-colors"
                 >
                   <p className="text-5xl mb-4">✉️</p>
                   <p className="text-gray-500 dark:text-gray-400 font-semibold">Selecciona un mensaje para leerlo</p>

@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
+import PropertyImage from "../components/PropertyImage";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
@@ -47,7 +48,12 @@ export default function PropertyDetail() {
   const { sendMessage } = useInbox();
   const property = allProperties.find((p) => p.id === Number(id));
 
+  const similar = allProperties
+    .filter((p) => p.id !== property.id && (p.type === property.type || p.city === property.city))
+    .slice(0, 4);
+
   const [lightbox, setLightbox] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [copied, setCopied] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [msgSent, setMsgSent] = useState(false);
@@ -107,8 +113,47 @@ export default function PropertyDetail() {
           <div className="absolute inset-0 bg-gradient-to-b from-gray-50/60 via-transparent to-gray-50 dark:from-gray-900/60 dark:to-gray-900" />
         </div>
 
-        {/* GRID DE FOTOS */}
-        <div className="relative h-full max-w-6xl mx-auto px-4 md:px-6 py-4 grid grid-cols-4 grid-rows-2 gap-2">
+        {/* CARRUSEL MOBILE */}
+        <div className="relative h-full md:hidden">
+          <img
+            src={gallery[currentSlide]}
+            alt={`slide-${currentSlide}`}
+            className="w-full h-full object-cover"
+          />
+          {/* flechas */}
+          <button
+            onClick={() => setCurrentSlide((currentSlide - 1 + gallery.length) % gallery.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center text-xl transition backdrop-blur-sm"
+          >‹</button>
+          <button
+            onClick={() => setCurrentSlide((currentSlide + 1) % gallery.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center text-xl transition backdrop-blur-sm"
+          >›</button>
+          {/* dots */}
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+            {gallery.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentSlide(i)}
+                className={`rounded-full transition-all ${i === currentSlide ? "w-5 h-2 bg-white" : "w-2 h-2 bg-white/50"}`}
+              />
+            ))}
+          </div>
+          {/* contador */}
+          <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-medium">
+            {currentSlide + 1} / {gallery.length}
+          </div>
+          {/* abrir lightbox */}
+          <button
+            onClick={() => setLightbox(currentSlide)}
+            className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium border border-white/20"
+          >
+            🔍 Ver todas
+          </button>
+        </div>
+
+        {/* GRID DESKTOP */}
+        <div className="relative h-full max-w-6xl mx-auto px-4 md:px-6 py-4 hidden md:grid grid-cols-4 grid-rows-2 gap-2">
           {/* Foto principal */}
           <div
             className="col-span-2 row-span-2 rounded-3xl overflow-hidden cursor-pointer relative group shadow-2xl"
@@ -395,6 +440,64 @@ export default function PropertyDetail() {
           </div>
 
         </div>
+
+        {/* ── PROPIEDADES SIMILARES ── */}
+        {similar.length > 0 && (
+          <div className="mt-4">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="w-1 h-5 bg-blue-600 rounded-full" />
+              Propiedades similares
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {similar.map((prop, i) => (
+                <motion.div
+                  key={prop.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                >
+                  <Link to={`/property/${prop.id}`} onClick={() => window.scrollTo(0, 0)}>
+                    <div className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                      <div className="relative overflow-hidden">
+                        <PropertyImage
+                          src={prop.image}
+                          type={prop.type}
+                          alt={prop.title}
+                          className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <span className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
+                        }`}>
+                          {prop.status}
+                        </span>
+                        <button
+                          onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
+                          className="absolute top-2 right-2 bg-white dark:bg-gray-800 w-7 h-7 rounded-full flex items-center justify-center shadow text-xs hover:scale-110 transition-transform"
+                        >
+                          {isFavorite(prop.id) ? "❤️" : "🤍"}
+                        </button>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-bold text-gray-900 dark:text-white text-xs leading-snug line-clamp-2">{prop.title}</h3>
+                        <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "Rep. Dominicana"}</p>
+                        <p className="text-blue-600 dark:text-blue-400 font-black text-sm mt-1.5">
+                          ${Number(prop.price).toLocaleString()}
+                          {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
+                        </p>
+                        <div className="flex gap-2 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700 text-gray-400 text-xs">
+                          <span>🛏️ {prop.rooms}</span>
+                          <span>🛁 {prop.baths}</span>
+                          <span>🚗 {prop.parking}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </motion.div>
     </div>
   );

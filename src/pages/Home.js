@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
 import { useProperties } from "../context/PropertiesContext";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const PROVINCIAS = [
   "Santo Domingo", "Santiago", "Punta Cana", "Samaná",
@@ -33,12 +34,16 @@ function sortProperties(props, sort) {
   return arr.sort((a, b) => (b.id > a.id ? 1 : -1));
 }
 
+const MAX_HISTORY = 6;
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recent");
+  const [showHistory, setShowHistory] = useState(false);
+  const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
 
   const activeTab = searchParams.get("tab") || "Todos";
@@ -49,10 +54,25 @@ export default function Home() {
 
   useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
 
+  const saveToHistory = (term) => {
+    if (!term.trim()) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((h) => h.toLowerCase() !== term.toLowerCase());
+      return [term, ...filtered].slice(0, MAX_HISTORY);
+    });
+  };
+
   const handleSearch = (term) => {
     const q = term || query;
     if (!q.trim()) return;
+    saveToHistory(q.trim());
+    setShowHistory(false);
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+  };
+
+  const removeFromHistory = (e, term) => {
+    e.stopPropagation();
+    setSearchHistory((prev) => prev.filter((h) => h !== term));
   };
 
   const handleTabChange = (tab) => {
@@ -60,7 +80,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300">
       <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* ── HERO ── */}
@@ -81,18 +101,59 @@ export default function Home() {
           <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg">
             Miles de propiedades en venta y renta en todo el país
           </p>
-          <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-2 flex gap-2">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="🔍  Busca por ciudad, sector o provincia..."
-              className="flex-1 px-4 py-3 outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm"
-            />
-            <button onClick={() => handleSearch()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shrink-0">
-              Buscar
-            </button>
+          <div className="w-full max-w-2xl relative">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-2 flex gap-2">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setShowHistory(true)}
+                onBlur={() => setTimeout(() => setShowHistory(false), 150)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="🔍  Busca por ciudad, sector o provincia..."
+                className="flex-1 px-4 py-3 outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm"
+              />
+              <button onClick={() => handleSearch()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shrink-0">
+                Buscar
+              </button>
+            </div>
+
+            {/* HISTORIAL DROPDOWN */}
+            {showHistory && searchHistory.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+              >
+                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Búsquedas recientes</p>
+                  <button
+                    onMouseDown={() => setSearchHistory([])}
+                    className="text-xs text-red-400 hover:text-red-600 font-medium transition"
+                  >
+                    Limpiar
+                  </button>
+                </div>
+                {searchHistory.map((term) => (
+                  <div
+                    key={term}
+                    onMouseDown={() => handleSearch(term)}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-300 dark:text-gray-600">🕐</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">{term}</span>
+                    </div>
+                    <button
+                      onMouseDown={(e) => removeFromHistory(e, term)}
+                      className="text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 opacity-0 group-hover:opacity-100 transition text-lg"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </motion.div>
+            )}
           </div>
           <div className="flex flex-wrap gap-2 mt-4 justify-center">
             {PROVINCIAS.map((p) => (
@@ -177,7 +238,7 @@ export default function Home() {
                 transition={{ delay: i * 0.04, duration: 0.3 }}
               >
                 <Link to={`/property/${prop.id}`}>
-                  <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 h-full">
+                  <div className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 h-full">
                     <div className="relative overflow-hidden">
                       <PropertyImage
                         src={prop.image}

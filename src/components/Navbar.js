@@ -1,35 +1,25 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import AuthModal from "./AuthModal";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useInbox } from "../context/InboxContext";
 
-export default function Navbar({ activeTab, onTabChange }) {
+export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { dark, toggleDark } = useTheme();
   const { currentUser, logout } = useAuth();
   const { favorites } = useProperties();
   const { getUnreadCount } = useInbox();
   const unread = currentUser ? getUnreadCount(currentUser.id) : 0;
 
-  const handleTabClick = (tab) => {
-    if (onTabChange) {
-      onTabChange(tab);
-    } else {
-      // Desde otras páginas, navega a home con el tab seleccionado
-      navigate(`/?tab=${encodeURIComponent(tab)}`);
-    }
-  };
-
   return (
     <>
-      <div className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900/90 backdrop-blur-md border-b-2 border-gray-200 dark:border-gray-700 shadow-md transition-colors duration-300">
 
         {/* FILA PRINCIPAL */}
         <div className="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -37,7 +27,7 @@ export default function Navbar({ activeTab, onTabChange }) {
           {/* LOGO */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <div className="bg-blue-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md">🏠</div>
-            <div className="hidden sm:block">
+            <div>
               <h1 className="font-black text-xl leading-none text-gray-900 dark:text-white">DomusRD</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">Real Estate</p>
             </div>
@@ -45,14 +35,6 @@ export default function Navbar({ activeTab, onTabChange }) {
 
           {/* ACCIONES */}
           <div className="flex items-center gap-2">
-
-            <div className="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
-              <Link to="/" className={`hover:text-blue-500 transition ${location.pathname === "/" ? "text-blue-600 font-semibold" : ""}`}>
-                Inicio
-              </Link>
-              <button onClick={() => handleTabClick("En Venta")} className="hover:text-blue-500 transition">Comprar</button>
-              <button onClick={() => handleTabClick("En Renta")} className="hover:text-blue-500 transition">Rentar</button>
-            </div>
 
             {/* DARK MODE */}
             <button
@@ -89,12 +71,23 @@ export default function Navbar({ activeTab, onTabChange }) {
               </button>
             </Link>
 
-            {/* PUBLICAR */}
-            <Link to="/publish">
-              <button className={`hidden md:flex items-center gap-1 px-5 py-2.5 rounded-full font-medium shadow-md transition ${location.pathname === "/publish" ? "bg-blue-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}`}>
-                + Publicar
-              </button>
-            </Link>
+            {/* PUBLICAR — solo Agentes y Vendedores */}
+            {currentUser && ["Agente", "Vendedor"].includes(currentUser.role) && (
+              <Link to="/publish">
+                <button className={`hidden md:flex items-center gap-1 px-5 py-2.5 rounded-full font-medium shadow-md transition ${location.pathname === "/publish" ? "bg-blue-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}`}>
+                  + Publicar
+                </button>
+              </Link>
+            )}
+
+            {/* PUBLICAR para no logueados */}
+            {!currentUser && (
+              <Link to="/publish">
+                <button className="hidden md:flex items-center gap-1 px-5 py-2.5 rounded-full font-medium shadow-md transition bg-blue-600 hover:bg-blue-700 text-white">
+                  + Publicar
+                </button>
+              </Link>
+            )}
 
             {/* USER */}
             {currentUser ? (
@@ -110,7 +103,15 @@ export default function Navbar({ activeTab, onTabChange }) {
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
                       <p className="text-xs text-gray-400">{currentUser.email}</p>
-                      <p className="text-xs text-blue-500 mt-0.5">{currentUser.role}</p>
+                      <p className={`text-xs mt-0.5 font-semibold ${
+                        currentUser.role === "Agente" ? "text-yellow-500" :
+                        currentUser.role === "Vendedor" ? "text-green-500" :
+                        "text-blue-500"
+                      }`}>
+                        {currentUser.role === "Agente" ? "⭐ Agente" :
+                         currentUser.role === "Vendedor" ? "🏠 Vendedor" :
+                         "👤 Cliente"}
+                      </p>
                     </div>
                     <Link
                       to="/profile"
@@ -167,8 +168,6 @@ export default function Navbar({ activeTab, onTabChange }) {
         {menuOpen && (
           <div className="lg:hidden border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 flex flex-col gap-2">
             <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 py-2">🏠 Inicio</Link>
-            <button onClick={() => { handleTabClick("En Venta"); setMenuOpen(false); }} className="text-left text-sm font-medium text-gray-700 dark:text-gray-300 py-2">💰 Comprar</button>
-            <button onClick={() => { handleTabClick("En Renta"); setMenuOpen(false); }} className="text-left text-sm font-medium text-gray-700 dark:text-gray-300 py-2">🔑 Rentar</button>
             {currentUser && (
               <>
                 <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 py-2">👤 Mi perfil</Link>
