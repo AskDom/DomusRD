@@ -45,10 +45,10 @@ export default function Footer() {
             {/* REDES */}
             <div className="flex gap-3 mt-5">
               {[
-                { icon: "𝕏", href: "https://twitter.com" },
-                { icon: "in", href: "https://linkedin.com" },
-                { icon: "f", href: "https://facebook.com" },
-                { icon: "📸", href: "https://instagram.com" },
+                { icon: "𝕏", href: "" },
+                { icon: "in", href: "" },
+                { icon: "f", href: "" },
+                { icon: "📸", href: "" },
               ].map((s) => (
                 <a
                   key={s.icon}
