@@ -4,11 +4,13 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
+import AuthModal from "../components/AuthModal";
 import PropertyImage from "../components/PropertyImage";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
+import { useToast } from "../context/ToastContext";
 
 const extraImages = {
   Apartamento: [
@@ -47,6 +49,7 @@ export default function PropertyDetail() {
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
   const { currentUser } = useAuth();
   const { sendMessage } = useInbox();
+  const { toast } = useToast();
   const property = allProperties.find((p) => p.id === Number(id));
 
   const similar = allProperties
@@ -58,10 +61,12 @@ export default function PropertyDetail() {
   const [copied, setCopied] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [msgSent, setMsgSent] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
+    toast({ message: "Link copiado al portapapeles 🔗", type: "info" });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -83,6 +88,7 @@ export default function PropertyDetail() {
     });
     setMsgText("");
     setMsgSent(true);
+    toast({ message: "Mensaje enviado al vendedor ✉️", type: "success" });
     setTimeout(() => setMsgSent(false), 3000);
   };
 
@@ -201,7 +207,13 @@ export default function PropertyDetail() {
             {copied ? "✅ Copiado" : "🔗 Compartir"}
           </button>
           <button
-            onClick={() => toggleFavorite(property.id)}
+            onClick={() => {
+              toggleFavorite(property.id);
+              toast({
+                message: isFavorite(property.id) ? "Eliminado de favoritos" : "Guardado en favoritos ❤️",
+                type: isFavorite(property.id) ? "info" : "success",
+              });
+            }}
             className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-lg"
           >
             {isFavorite(property.id) ? "❤️" : "🤍"}
@@ -412,7 +424,7 @@ export default function PropertyDetail() {
                     )
                   ) : (
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
-                      <Link to="/" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">Inicia sesión</Link> para contactar al vendedor
+                      <button onClick={() => setAuthOpen(true)} className="text-blue-600 dark:text-blue-400 font-bold hover:underline">Inicia sesión</button> para contactar al vendedor
                     </div>
                   )}
 
@@ -503,6 +515,7 @@ export default function PropertyDetail() {
         )}
 
       </motion.div>
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

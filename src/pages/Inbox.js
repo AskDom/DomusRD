@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
+import { useToast } from "../context/ToastContext";
 
 function timeAgo(iso) {
   const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -26,6 +27,7 @@ function Avatar({ name, size = "md" }) {
 export default function Inbox() {
   const { currentUser } = useAuth();
   const { getConversations, markAsRead, deleteMessage, replyMessage } = useInbox();
+  const { toast } = useToast();
   const [selected, setSelected] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [replySent, setReplySent] = useState(false);
@@ -70,6 +72,7 @@ export default function Inbox() {
     });
     setReplyText("");
     setReplySent(true);
+    toast({ message: "Respuesta enviada ✉️", type: "success" });
     setTimeout(() => setReplySent(false), 2000);
   };
 

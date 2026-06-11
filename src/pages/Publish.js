@@ -5,6 +5,7 @@ import L from "leaflet";
 import Navbar from "../components/Navbar";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -30,6 +31,7 @@ const selectClass =
 export default function Publish() {
   const { addProperty, published } = useProperties();
   const { currentUser } = useAuth();
+  const { toast } = useToast();
 
   const isVendedor = currentUser?.role === "Vendedor";
   const myPublished = published.filter((p) => p.publishedById === currentUser?.id);
@@ -96,6 +98,7 @@ export default function Publish() {
     setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, images: [], city: "", lat: "", lng: "" });
     setPosition(null);
     setSubmitted(true);
+    toast({ message: "¡Propiedad publicada con éxito! 🏠", type: "success" });
     setTimeout(() => setSubmitted(false), 3000);
   };
 

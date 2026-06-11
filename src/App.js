@@ -3,6 +3,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { PropertiesProvider } from "./context/PropertiesContext";
 import { InboxProvider } from "./context/InboxContext";
+import { ToastProvider } from "./context/ToastContext";
 import { AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
@@ -46,9 +47,11 @@ function App() {
       <AuthProvider>
         <PropertiesProvider>
           <InboxProvider>
-            <Router>
-              <AnimatedRoutes />
-            </Router>
+            <ToastProvider>
+              <Router>
+                <AnimatedRoutes />
+              </Router>
+            </ToastProvider>
           </InboxProvider>
         </PropertiesProvider>
       </AuthProvider>

@@ -4,12 +4,14 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
+import { useToast } from "../context/ToastContext";
 
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
   const { currentUser, logout } = useAuth();
   const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty, verifyProperty } = useProperties();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [editingId, setEditingId] = useState(null);
@@ -43,11 +45,29 @@ export default function Profile() {
   const saveEdit = () => {
     updateProperty(editingId, editForm);
     setEditingId(null);
+    toast({ message: "Propiedad actualizada correctamente", type: "success" });
   };
 
   const handleDelete = (id) => {
     deleteProperty(id);
     setConfirmDelete(null);
+    toast({ message: "Propiedad eliminada", type: "info" });
+  };
+
+  const handleVerify = (id) => {
+    verifyProperty(id);
+    toast({ message: "¡Propiedad verificada! ✓", type: "success" });
+  };
+
+  const handleStatusChange = (id, newStatus) => {
+    updateProperty(id, { status: newStatus });
+    const messages = {
+      "Vendido": "Propiedad marcada como Vendida 🎉",
+      "Rentado": "Propiedad marcada como Rentada 🎉",
+      "Venta": "Propiedad volvió a estado En Venta",
+      "Renta": "Propiedad volvió a estado En Renta",
+    };
+    toast({ message: messages[newStatus] || "Estado actualizado", type: "success" });
   };
 
   const inputClass = "w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors";
@@ -169,13 +189,44 @@ export default function Profile() {
                         /* VISTA NORMAL */
                         <div className="flex-1 flex justify-between gap-3">
                           <div>
-                            <div className="flex gap-2 mb-1">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${prop.status === "Venta" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" : "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"}`}>{prop.status}</span>
+                            <div className="flex gap-2 mb-1 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                prop.status === "Venta" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" :
+                                prop.status === "Renta" ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" :
+                                prop.status === "Vendido" ? "bg-gray-200 text-gray-500 dark:bg-gray-600 dark:text-gray-300 line-through" :
+                                "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 line-through"
+                              }`}>{prop.status}</span>
                               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{prop.type}</span>
                             </div>
                             <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
                             <p className="text-blue-600 dark:text-blue-400 font-black mt-1">${Number(prop.price).toLocaleString()}</p>
                             <p className="text-gray-400 text-xs mt-1">🛏️ {prop.rooms} · 🛁 {prop.baths} · 🚗 {prop.parking}</p>
+
+                            {/* CAMBIO RÁPIDO DE STATUS */}
+                            {(prop.status === "Venta" || prop.status === "Vendido") && (
+                              <button
+                                onClick={() => handleStatusChange(prop.id, prop.status === "Venta" ? "Vendido" : "Venta")}
+                                className={`mt-2 text-xs px-2.5 py-1 rounded-lg font-semibold transition ${
+                                  prop.status === "Venta"
+                                    ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                    : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
+                                }`}
+                              >
+                                {prop.status === "Venta" ? "🏁 Marcar como Vendido" : "↩ Volver a En Venta"}
+                              </button>
+                            )}
+                            {(prop.status === "Renta" || prop.status === "Rentado") && (
+                              <button
+                                onClick={() => handleStatusChange(prop.id, prop.status === "Renta" ? "Rentado" : "Renta")}
+                                className={`mt-2 text-xs px-2.5 py-1 rounded-lg font-semibold transition ${
+                                  prop.status === "Renta"
+                                    ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                    : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100"
+                                }`}
+                              >
+                                {prop.status === "Renta" ? "🏁 Marcar como Rentado" : "↩ Volver a En Renta"}
+                              </button>
+                            )}
                           </div>
                           <div className="flex flex-col gap-2 shrink-0">
                             <Link to={`/property/${prop.id}`} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition text-center">
@@ -185,7 +236,7 @@ export default function Profile() {
                               ✏️ Editar
                             </button>
                             {!prop.verified && (
-                              <button onClick={() => verifyProperty(prop.id)} className="text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-xl hover:bg-green-100 transition">
+                              <button onClick={() => handleVerify(prop.id)} className="text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-xl hover:bg-green-100 transition">
                                 ✅ Verificar
                               </button>
                             )}

@@ -8,6 +8,7 @@ import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useToast } from "../context/ToastContext";
 
 const PROVINCIAS = [
   "Santo Domingo", "Santiago", "Punta Cana", "Samaná",
@@ -47,6 +48,7 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
+  const { toast } = useToast();
 
   const activeTab = searchParams.get("tab") || "Todos";
   const filtered = sortProperties(
@@ -249,7 +251,14 @@ export default function Home() {
                         {prop.verified && <VerifiedBadge />}
                       </div>
                       <button
-                        onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleFavorite(prop.id);
+                          toast({
+                            message: isFavorite(prop.id) ? "Eliminado de favoritos" : "Guardado en favoritos ❤️",
+                            type: isFavorite(prop.id) ? "info" : "success",
+                          });
+                        }}
                         className="absolute top-3 right-3 bg-white dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform text-sm"
                       >
                         {isFavorite(prop.id) ? "❤️" : "🤍"}
