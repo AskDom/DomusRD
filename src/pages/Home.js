@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
+import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
@@ -207,16 +209,7 @@ export default function Home() {
         {/* GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading ? (
-            [...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-200 dark:bg-gray-700" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded w-1/2" />
-                  <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded w-1/3" />
-                </div>
-              </div>
-            ))
+            [...Array(8)].map((_, i) => <PropertyCardSkeleton key={i} />)
           ) : filtered.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -246,13 +239,14 @@ export default function Home() {
                         alt={prop.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-3 left-3 flex gap-2">
+                      <div className="absolute top-3 left-3 flex gap-2 items-center">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow ${prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"}`}>
                           {prop.status}
                         </span>
                         <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold shadow">
                           {prop.type}
                         </span>
+                        {prop.verified && <VerifiedBadge />}
                       </div>
                       <button
                         onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}

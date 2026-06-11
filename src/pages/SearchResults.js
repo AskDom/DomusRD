@@ -8,6 +8,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 
 // Fix default icons
@@ -80,7 +81,7 @@ export default function SearchResults() {
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mapVersion, setMapVersion] = useState(0);
-  const [filters, setFilters] = useState({ status: "", type: "", rooms: "" });
+  const [filters, setFilters] = useState({ status: "", type: "", rooms: "", minPrice: "", maxPrice: "" });
   const { allProperties, toggleFavorite, isFavorite } = useProperties();
   const query = searchParams.get("q") || "";
 
@@ -102,7 +103,9 @@ export default function SearchResults() {
     const matchStatus = !filters.status || p.status === filters.status;
     const matchType = !filters.type || p.type === filters.type;
     const matchRooms = !filters.rooms || p.rooms === Number(filters.rooms);
-    return matchQuery && matchStatus && matchType && matchRooms;
+    const matchMin = !filters.minPrice || Number(p.price) >= Number(filters.minPrice);
+    const matchMax = !filters.maxPrice || Number(p.price) <= Number(filters.maxPrice);
+    return matchQuery && matchStatus && matchType && matchRooms && matchMin && matchMax;
   });
 
   const selectClass = "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-4 py-2 text-sm outline-none border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 transition-colors";
@@ -141,6 +144,35 @@ export default function SearchResults() {
           <option value="">Habitaciones</option>
           {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} hab</option>)}
         </select>
+
+        {/* PRECIO MIN/MAX */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            placeholder="Precio mín"
+            value={filters.minPrice}
+            onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+            className={`${selectClass} w-28`}
+          />
+          <span className="text-gray-400 text-sm">—</span>
+          <input
+            type="number"
+            placeholder="Precio máx"
+            value={filters.maxPrice}
+            onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+            className={`${selectClass} w-28`}
+          />
+        </div>
+
+        {/* LIMPIAR FILTROS */}
+        {(filters.status || filters.type || filters.rooms || filters.minPrice || filters.maxPrice) && (
+          <button
+            onClick={() => setFilters({ status: "", type: "", rooms: "", minPrice: "", maxPrice: "" })}
+            className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap transition"
+          >
+            ✕ Limpiar
+          </button>
+        )}
 
         <span className="text-gray-400 dark:text-gray-500 text-sm ml-auto hidden md:block">
           {loading ? "Buscando..." : `${results.length} resultado${results.length !== 1 ? "s" : ""} para`} {!loading && <strong className="text-gray-700 dark:text-gray-200">"{query}"</strong>}
@@ -193,13 +225,14 @@ export default function SearchResults() {
                           alt={prop.title}
                           className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                        <div className="absolute top-2 left-2 flex gap-1.5">
+                        <div className="absolute top-2 left-2 flex gap-1.5 items-center">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                             prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
                           }`}>{prop.status}</span>
                           <span className="bg-white/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2 py-0.5 rounded-full text-xs font-semibold">
                             {prop.type}
                           </span>
+                          {prop.verified && <VerifiedBadge />}
                         </div>
                         <button
                           onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}

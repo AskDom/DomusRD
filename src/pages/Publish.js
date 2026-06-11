@@ -28,11 +28,11 @@ const selectClass =
   "w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 outline-none text-gray-800 dark:text-gray-100 transition-colors";
 
 export default function Publish() {
-  const { allProperties, addProperty } = useProperties();
+  const { addProperty, published } = useProperties();
   const { currentUser } = useAuth();
 
   const isVendedor = currentUser?.role === "Vendedor";
-  const myPublished = allProperties.filter((p) => p.publishedById === currentUser?.id);
+  const myPublished = published.filter((p) => p.publishedById === currentUser?.id);
   const vendedorLimit = 3;
   const hasReachedLimit = isVendedor && myPublished.length >= vendedorLimit;
   const [position, setPosition] = useState(null);
@@ -43,15 +43,32 @@ export default function Publish() {
     title: "", price: "", description: "",
     type: "Apartamento", status: "Venta",
     rooms: 1, baths: 1, parking: 1,
-    city: "", image: "", lat: "", lng: "",
+    city: "", images: [], lat: "", lng: "",
   });
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setForm({ ...form, image: reader.result });
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const remaining = 8 - form.images.length;
+    const toProcess = files.slice(0, remaining);
+    toProcess.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm((prev) => ({ ...prev, images: [...prev.images, reader.result] }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index) => {
+    setForm((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+  };
+
+  const moveImage = (from, to) => {
+    const imgs = [...form.images];
+    const [moved] = imgs.splice(from, 1);
+    imgs.splice(to, 0, moved);
+    setForm((prev) => ({ ...prev, images: imgs }));
   };
 
   const handleSubmit = (e) => {
@@ -71,10 +88,12 @@ export default function Publish() {
       lng: position.lng,
       liked: false,
       city: form.city,
+      image: form.images[0] || "",
+      images: form.images,
       publishedById: currentUser?.id || null,
       publishedBy: currentUser?.name || "Anónimo",
     });
-    setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, image: "", city: "", lat: "", lng: "" });
+    setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, images: [], city: "", lat: "", lng: "" });
     setPosition(null);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
@@ -105,11 +124,6 @@ export default function Publish() {
             style={{ zIndex: 0 }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {allProperties.map((prop) => (
-              <Marker key={prop.id} position={[prop.lat, prop.lng]}>
-                <Popup><strong>{prop.title}</strong><br />${prop.price?.toLocaleString()}</Popup>
-              </Marker>
-            ))}
             <LocationSelector setPosition={setPosition} />
             {position && (
               <Marker position={position}>
@@ -244,17 +258,85 @@ export default function Publish() {
               />
             </div>
 
-            {/* FOTO */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Imagen principal</label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-4 text-center bg-gray-50 dark:bg-gray-700 transition-colors">
-                {form.image ? (
-                  <img src={form.image} alt="preview" className="w-full h-28 object-cover rounded-xl mb-2" />
-                ) : (
-                  <p className="text-sm text-gray-400 dark:text-gray-400 mb-2">📸 Sube una foto</p>
-                )}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full text-sm text-gray-500 dark:text-gray-400" />
-              </div>
+            {/* FOTOS */}
+            <div className="lg:col-span-3">
+              <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                Fotos de la propiedad
+                <span className="text-gray-400 font-normal ml-2">({form.images.length}/8 — la primera será la portada)</span>
+              </label>
+
+              {/* PREVIEWS */}
+              {form.images.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {form.images.map((img, i) => (
+                    <div key={i} className="relative group rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-gray-700">
+                      <img src={img} alt={`foto-${i}`} className="w-full h-full object-cover" />
+
+                      {/* PORTADA badge */}
+                      {i === 0 && (
+                        <span className="absolute top-1 left-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                          Portada
+                        </span>
+                      )}
+
+                      {/* OVERLAY ACCIONES */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                        {i > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(i, i - 1)}
+                            className="bg-white/90 text-gray-800 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold hover:bg-white transition"
+                            title="Mover izquierda"
+                          >←</button>
+                        )}
+                        {i === 0 && form.images.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(i, i + 1)}
+                            className="bg-white/90 text-gray-800 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold hover:bg-white transition"
+                            title="Mover derecha"
+                          >→</button>
+                        )}
+                        {i > 0 && i < form.images.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(i, i + 1)}
+                            className="bg-white/90 text-gray-800 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold hover:bg-white transition"
+                          >→</button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="bg-red-500 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold hover:bg-red-600 transition"
+                          title="Eliminar"
+                        >×</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* UPLOAD AREA */}
+              {form.images.length < 8 && (
+                <label className="block w-full cursor-pointer">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-6 text-center bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-blue-400 transition-colors">
+                    <p className="text-3xl mb-2">📸</p>
+                    <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                      Haz clic para subir fotos
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Puedes subir hasta {8 - form.images.length} foto{8 - form.images.length !== 1 ? "s" : ""} más · JPG, PNG, WEBP
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
           </div>

@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import PropertyImage from "../components/PropertyImage";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
@@ -98,7 +99,9 @@ export default function PropertyDetail() {
     );
   }
 
-  const gallery = [property.image, ...(extraImages[property.type] || [])];
+  const gallery = property.images?.length > 0
+    ? property.images
+    : [property.image, ...(extraImages[property.type] || [])];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -254,13 +257,14 @@ export default function PropertyDetail() {
 
             {/* TÍTULO */}
             <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-2 mb-3 flex-wrap items-center">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                   property.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
                 }`}>{property.status}</span>
                 <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-bold">
                   {property.type}
                 </span>
+                {property.verified && <VerifiedBadge size="lg" />}
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight">
                 {property.title}

@@ -9,7 +9,7 @@ export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
   const { currentUser, logout } = useAuth();
-  const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty } = useProperties();
+  const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty, verifyProperty } = useProperties();
   const navigate = useNavigate();
 
   const [editingId, setEditingId] = useState(null);
@@ -184,6 +184,16 @@ export default function Profile() {
                             <button onClick={() => startEdit(prop)} className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition">
                               ✏️ Editar
                             </button>
+                            {!prop.verified && (
+                              <button onClick={() => verifyProperty(prop.id)} className="text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-xl hover:bg-green-100 transition">
+                                ✅ Verificar
+                              </button>
+                            )}
+                            {prop.verified && (
+                              <span className="text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-xl text-center">
+                                ✅ Verificado
+                              </span>
+                            )}
                             <button onClick={() => setConfirmDelete(prop.id)} className="text-xs bg-red-50 dark:bg-red-900/20 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-100 transition">
                               🗑️ Borrar
                             </button>

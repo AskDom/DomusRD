@@ -8,12 +8,21 @@ export function PropertiesProvider({ children }) {
   const [published, setPublished] = useLocalStorage("domusrd-properties", []);
   const [favorites, setFavorites] = useLocalStorage("domusrd-favorites", []);
 
-  const allProperties = [...mockProperties, ...published];
+  const allProperties = [
+    ...mockProperties.map((p) => ({ ...p, verified: true })),
+    ...published,
+  ];
 
   const addProperty = (property) => {
-    const newProp = { ...property, id: Date.now(), isUserPublished: true };
+    const newProp = { ...property, id: Date.now(), isUserPublished: true, verified: false };
     setPublished((prev) => [newProp, ...prev]);
     return newProp;
+  };
+
+  const verifyProperty = (id) => {
+    setPublished((prev) =>
+      prev.map((p) => p.id === id ? { ...p, verified: true } : p)
+    );
   };
 
   const updateProperty = (id, updates) => {
@@ -44,7 +53,7 @@ export function PropertiesProvider({ children }) {
   return (
     <PropertiesContext.Provider value={{
       allProperties, published, favorites,
-      addProperty, updateProperty, deleteProperty,
+      addProperty, verifyProperty, updateProperty, deleteProperty,
       toggleFavorite, isFavorite,
       getUserProperties, getFavoriteProperties,
     }}>
