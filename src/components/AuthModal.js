@@ -31,14 +31,14 @@ const ROLES = [
 export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "Cliente" });
-  const { login, register, error, setError } = useAuth();
+  const { login, register, error, setError, loading } = useAuth();
 
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const success = isLogin
-      ? login({ email: form.email, password: form.password })
-      : register({ name: form.name, email: form.email, password: form.password, role: form.role });
+      ? await login({ email: form.email, password: form.password })
+      : await register({ name: form.name, email: form.email, password: form.password, role: form.role });
     if (success) {
       onClose();
       setForm({ name: "", email: "", password: "", role: "Cliente" });
@@ -155,9 +155,10 @@ export default function AuthModal({ isOpen, onClose }) {
 
           <button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3.5 font-bold shadow-lg transition"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-2xl py-3.5 font-bold shadow-lg transition"
           >
-            {isLogin ? "Iniciar sesión" : "Crear cuenta"}
+            {loading ? "Cargando..." : isLogin ? "Iniciar sesión" : "Crear cuenta"}
           </button>
 
           <div className="flex items-center gap-3 py-1">

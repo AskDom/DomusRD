@@ -1,42 +1,98 @@
-import React, { createContext, useContext, useState } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import React, { createContext, useContext, useState, useCallback } from "react";
 
+// ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+// ─── NORMALIZACIÓN DE ROL ────────────────────────────────────────────────────
+// El backend guarda roles en MAYÚSCULAS (VENDEDOR, AGENTE, CLIENTE)
+// El frontend los compara con mayúscula inicial (Vendedor, Agente, Cliente)
+// Normalizamos aquí una sola vez para no tocar ningún otro archivo
+const ROLE_DISPLAY = { CLIENTE: "Cliente", VENDEDOR: "Vendedor", AGENTE: "Agente" };
+const normalizeUser = (user) => ({ ...user, role: ROLE_DISPLAY[user.role] || user.role });
+
+// ─── SESSION HELPERS ─────────────────────────────────────────────────────────
+const saveSession = (token, user) => {
+  localStorage.setItem("domusrd-token", token);
+  localStorage.setItem("domusrd-session", JSON.stringify(user));
+};
+const clearSession = () => {
+  localStorage.removeItem("domusrd-token");
+  localStorage.removeItem("domusrd-session");
+};
+const loadSession = () => {
+  try {
+    const user = localStorage.getItem("domusrd-session");
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
+};
+
+// ─── CONTEXT ─────────────────────────────────────────────────────────────────
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useLocalStorage("domusrd-users", []);
-  const [currentUser, setCurrentUser] = useLocalStorage("domusrd-session", null);
+  const [currentUser, setCurrentUser] = useState(loadSession);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const register = ({ name, email, password, role }) => {
+  const register = useCallback(async ({ name, email, password, role }) => {
     setError("");
-    if (users.find((u) => u.email === email)) {
-      setError("Ya existe una cuenta con ese correo.");
-      return false;
-    }
-    const newUser = { id: Date.now(), name, email, password, role };
-    setUsers([...users, newUser]);
-    setCurrentUser({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
-    return true;
-  };
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Error al crear la cuenta."); return false; }
 
-  const login = ({ email, password }) => {
+      const user = normalizeUser(data.user); // VENDEDOR → Vendedor
+      saveSession(data.token, user);
+      setCurrentUser(user);
+      return true;
+    } catch {
+      setError("No se pudo conectar con el servidor. ¿Está corriendo el backend?");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = useCallback(async ({ email, password }) => {
     setError("");
-    const user = users.find((u) => u.email === email && u.password === password);
-    if (!user) {
-      setError("Correo o contraseña incorrectos.");
-      return false;
-    }
-    setCurrentUser({ id: user.id, name: user.name, email: user.email, role: user.role });
-    return true;
-  };
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Correo o contraseña incorrectos."); return false; }
 
-  const logout = () => {
+      const user = normalizeUser(data.user); // AGENTE → Agente
+      saveSession(data.token, user);
+      setCurrentUser(user);
+      return true;
+    } catch {
+      setError("No se pudo conectar con el servidor. ¿Está corriendo el backend?");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    clearSession();
     setCurrentUser(null);
-  };
+  }, []);
+
+  const getToken = useCallback(() => localStorage.getItem("domusrd-token"), []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError }}>
+    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, getToken }}>
       {children}
     </AuthContext.Provider>
   );

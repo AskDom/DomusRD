@@ -50,7 +50,21 @@ export default function PropertyDetail() {
   const { currentUser } = useAuth();
   const { sendMessage } = useInbox();
   const { toast } = useToast();
-  const property = allProperties.find((p) => p.id === Number(id));
+  const property = allProperties.find((p) => p.id === id || p.id === Number(id));
+
+  // El backend devuelve publishedBy como objeto { id, name, email }
+  // Los datos mock lo tienen como string. Normalizamos aquí.
+  const publishedByName = property
+    ? (typeof property.publishedBy === "object" && property.publishedBy !== null
+        ? property.publishedBy.name
+        : property.publishedBy || "DomusRD")
+    : "DomusRD";
+
+  const publishedById = property
+    ? (typeof property.publishedBy === "object" && property.publishedBy !== null
+        ? property.publishedBy.id
+        : property.publishedById || "admin")
+    : "admin";
 
   const similar = allProperties
     .filter((p) => p.id !== property.id && (p.type === property.type || p.city === property.city))
@@ -80,8 +94,8 @@ export default function PropertyDetail() {
     sendMessage({
       fromId: currentUser.id,
       fromName: currentUser.name,
-      toId: property.publishedById || "admin",
-      toName: property.publishedBy || "DomusRD",
+      toId: publishedById,
+      toName: publishedByName,
       propertyId: property.id,
       propertyTitle: property.title,
       text: msgText,
@@ -383,14 +397,14 @@ export default function PropertyDetail() {
                 <div className="p-5 space-y-4">
 
                   {/* AGENTE */}
-                  {property.publishedBy && (
+                  {publishedByName && (
                     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-2xl p-3 transition-colors">
                       <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-md shrink-0">
-                        {property.publishedBy.charAt(0).toUpperCase()}
+                        {publishedByName.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="text-xs text-gray-400">Publicado por</p>
-                        <p className="font-bold text-gray-900 dark:text-white text-sm">{property.publishedBy}</p>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{publishedByName}</p>
                       </div>
                     </div>
                   )}

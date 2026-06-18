@@ -34,7 +34,12 @@ export default function Publish() {
   const { toast } = useToast();
 
   const isVendedor = currentUser?.role === "Vendedor";
-  const myPublished = published.filter((p) => p.publishedById === currentUser?.id);
+  const myPublished = published.filter((p) => {
+    const ownerId = typeof p.publishedBy === "object" && p.publishedBy !== null
+      ? p.publishedBy.id
+      : p.publishedById;
+    return ownerId === currentUser?.id;
+  });
   const vendedorLimit = 3;
   const hasReachedLimit = isVendedor && myPublished.length >= vendedorLimit;
   const [position, setPosition] = useState(null);
@@ -73,7 +78,9 @@ export default function Publish() {
     setForm((prev) => ({ ...prev, images: imgs }));
   };
 
-  const handleSubmit = (e) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = {};
     if (!form.title.trim()) errs.title = "El título es requerido";
@@ -84,22 +91,26 @@ export default function Publish() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     if (hasReachedLimit) return;
-    addProperty({
-      ...form,
-      lat: position.lat,
-      lng: position.lng,
-      liked: false,
-      city: form.city,
-      image: form.images[0] || "",
-      images: form.images,
-      publishedById: currentUser?.id || null,
-      publishedBy: currentUser?.name || "Anónimo",
-    });
-    setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, images: [], city: "", lat: "", lng: "" });
-    setPosition(null);
-    setSubmitted(true);
-    toast({ message: "¡Propiedad publicada con éxito! 🏠", type: "success" });
-    setTimeout(() => setSubmitted(false), 3000);
+    setSubmitting(true);
+    try {
+      await addProperty({
+        ...form,
+        lat: position.lat,
+        lng: position.lng,
+        images: form.images,
+        publishedById: currentUser?.id || null,
+        publishedBy: currentUser?.name || "Anónimo",
+      });
+      setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, images: [], city: "", lat: "", lng: "" });
+      setPosition(null);
+      setSubmitted(true);
+      toast({ message: "¡Propiedad publicada con éxito! 🏠", type: "success" });
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (err) {
+      toast({ message: err.message || "Error al publicar la propiedad", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -238,14 +249,14 @@ export default function Publish() {
             <div>
               <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Características</label>
               <div className="grid grid-cols-3 gap-2">
-                <select value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} className={selectClass}>
-                  {[1,2,3,4,5].map((n) => <option key={n}>{n} hab</option>)}
+                <select value={form.rooms} onChange={(e) => setForm({ ...form, rooms: Number(e.target.value) })} className={selectClass}>
+                  {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n} hab</option>)}
                 </select>
-                <select value={form.baths} onChange={(e) => setForm({ ...form, baths: e.target.value })} className={selectClass}>
-                  {[1,2,3,4].map((n) => <option key={n}>{n} baños</option>)}
+                <select value={form.baths} onChange={(e) => setForm({ ...form, baths: Number(e.target.value) })} className={selectClass}>
+                  {[1,2,3,4].map((n) => <option key={n} value={n}>{n} baños</option>)}
                 </select>
-                <select value={form.parking} onChange={(e) => setForm({ ...form, parking: e.target.value })} className={selectClass}>
-                  {[0,1,2,3].map((n) => <option key={n}>{n} parq.</option>)}
+                <select value={form.parking} onChange={(e) => setForm({ ...form, parking: Number(e.target.value) })} className={selectClass}>
+                  {[0,1,2,3].map((n) => <option key={n} value={n}>{n} parq.</option>)}
                 </select>
               </div>
             </div>
@@ -348,10 +359,10 @@ export default function Publish() {
           <div className="mt-6 flex items-center gap-4">
             <button
               type="submit"
-              disabled={hasReachedLimit}
+              disabled={hasReachedLimit || submitting}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition text-base"
             >
-              🚀 Publicar propiedad
+              {submitting ? "Publicando..." : "🚀 Publicar propiedad"}
             </button>
             <p className="text-sm text-gray-400 dark:text-gray-500">
               {position ? "✅ Ubicación seleccionada" : "⚠️ Falta seleccionar ubicación en el mapa"}

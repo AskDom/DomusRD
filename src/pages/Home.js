@@ -34,7 +34,11 @@ function sortProperties(props, sort) {
   const arr = [...props];
   if (sort === "price_asc") return arr.sort((a, b) => a.price - b.price);
   if (sort === "price_desc") return arr.sort((a, b) => b.price - a.price);
-  return arr.sort((a, b) => (b.id > a.id ? 1 : -1));
+  // Ordenar por fecha de creación (backend) o por id numérico (mock)
+  return arr.sort((a, b) => {
+    if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
+    return b.id > a.id ? 1 : -1;
+  });
 }
 
 const MAX_HISTORY = 6;
@@ -47,7 +51,7 @@ export default function Home() {
   const [sort, setSort] = useState("recent");
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
-  const { allProperties, toggleFavorite, isFavorite } = useProperties();
+  const { allProperties, toggleFavorite, isFavorite, loading: propertiesLoading } = useProperties();
   const { toast } = useToast();
 
   const activeTab = searchParams.get("tab") || "Todos";
@@ -56,7 +60,14 @@ export default function Home() {
     sort
   );
 
-  useEffect(() => { setTimeout(() => setLoading(false), 1800); }, []);
+  useEffect(() => {
+    if (!propertiesLoading) {
+      setLoading(false);
+    } else {
+      const t = setTimeout(() => setLoading(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [propertiesLoading]);
 
   const saveToHistory = (term) => {
     if (!term.trim()) return;
