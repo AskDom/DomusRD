@@ -53,18 +53,34 @@ export default function Publish() {
     city: "", images: [], lat: "", lng: "",
   });
 
-  const handleImageUpload = (e) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    const remaining = 8 - form.images.length;
+    const remaining = 6 - form.images.length;
     const toProcess = files.slice(0, remaining);
-    toProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, images: [...prev.images, reader.result] }));
-      };
-      reader.readAsDataURL(file);
-    });
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      toProcess.forEach((file) => formData.append('images', file));
+
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('domusrd-token');
+      const res = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al subir imágenes');
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...data.urls] }));
+    } catch (err) {
+      toast({ message: err.message || 'Error al subir las imágenes', type: 'error' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeImage = (index) => {
@@ -276,7 +292,7 @@ export default function Publish() {
             <div className="lg:col-span-3">
               <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
                 Fotos de la propiedad
-                <span className="text-gray-400 font-normal ml-2">({form.images.length}/8 — la primera será la portada)</span>
+                <span className="text-gray-400 font-normal ml-2">({form.images.length}/6 — la primera será la portada)</span>
               </label>
 
               {/* PREVIEWS */}
@@ -331,12 +347,12 @@ export default function Publish() {
               )}
 
               {/* UPLOAD AREA */}
-              {form.images.length < 8 && (
+              {form.images.length < 6 && (
                 <label className="block w-full cursor-pointer">
                   <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-6 text-center bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-blue-400 transition-colors">
                     <p className="text-3xl mb-2">📸</p>
                     <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                      Haz clic para subir fotos
+                      {uploading ? "Subiendo a Cloudinary..." : "Haz clic para subir fotos"}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
                       Puedes subir hasta {8 - form.images.length} foto{8 - form.images.length !== 1 ? "s" : ""} más · JPG, PNG, WEBP

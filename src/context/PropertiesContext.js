@@ -1,142 +1,192 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useAuth } from "./AuthContext";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// El backend devuelve type/status en MAYÚSCULAS (APARTAMENTO, VENTA...)
+// El frontend los usa con mayúscula inicial (Apartamento, Venta...)
+const TYPE_MAP  = { APARTAMENTO: "Apartamento", CASA: "Casa", VILLA: "Villa" };
+const STATUS_MAP = { VENTA: "Venta", RENTA: "Renta", VENDIDO: "Vendido", RENTADO: "Rentado" };
+
+const normalizeProperty = (p) => ({
+  ...p,
+  type:   TYPE_MAP[p.type]   || p.type,
+  status: STATUS_MAP[p.status] || p.status,
+  // El backend devuelve publishedBy como objeto { id, name, email }
+  // lo dejamos tal cual — PropertyDetail ya sabe manejarlo
+  image: p.images?.[0] || "",
+});
+
+// ─── CONTEXT ─────────────────────────────────────────────────────────────────
 const PropertiesContext = createContext();
-const API_URL = "http://localhost:5000/api/properties";
 
 export function PropertiesProvider({ children }) {
-  const [allProperties, setAllProperties] = useState([]);
-  const [published, setPublished] = useState([]);
-  const [favorites, setFavorites] = useState(() => {
-    // Mantener favoritos local de momento
-    const localFavs = localStorage.getItem("domusrd-favorites");
-    return localFavs ? JSON.parse(localFavs) : [];
+  const { getToken } = useAuth();
+
+  const [properties, setProperties]   = useState([]);
+  const [favorites,  setFavorites]    = useState(() => {
+    try { return JSON.parse(localStorage.getItem("domusrd-favorites")) || []; }
+    catch { return []; }
   });
+  const [loading, setLoading]   = useState(true);
+  const [error,   setError]     = useState(null);
 
-  // Guardar favoritos locales cada vez que cambien
-  useEffect(() => {
-    localStorage.setItem("domusrd-favorites", JSON.stringify(favorites));
-  }, [favorites]);
-
-  // ── 1. CARGAR PROPIEDADES DESDE EL BACKEND (GET) ──────────────────
-  const fetchProperties = async () => {
+  // ── CARGAR PROPIEDADES DESDE EL BACKEND ──────────────────────────────────
+  const fetchProperties = useCallback(async (city = "") => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Error al traer propiedades");
-      const data = await response.json();
-      
-      setAllProperties(data);
-      // Filtramos las publicadas simulando las del usuario si es necesario, 
-      // o dejamos que el backend se encargue mediante getUserProperties
-      setPublished(data); 
-    } catch (error) {
-      console.error("Error cargando backend:", error);
+      const url = city
+        ? `${API_URL}/api/properties?city=${encodeURIComponent(city)}`
+        : `${API_URL}/api/properties`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cargar propiedades");
+      setProperties(data.map(normalizeProperty));
+    } catch (err) {
+      console.error("fetchProperties error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProperties();
   }, []);
 
-  // Función auxiliar para obtener el token guardado en el login
-  const getAuthHeader = () => {
-    const token = localStorage.getItem("domusrd-token"); // Ajusta el nombre si en tu AuthContext usas otro
-    return token ? { "Authorization": `Bearer ${token}` } : {};
-  };
+  useEffect(() => { fetchProperties(); }, [fetchProperties]);
 
-  // ── 2. CREAR PROPIEDAD (POST + TOKEN) ─────────────────────────────
-  const addProperty = async (property) => {
+  // ── PUBLICAR PROPIEDAD ────────────────────────────────────────────────────
+  const addProperty = useCallback(async (formData) => {
+    const token = getToken();
     try {
-      const response = await fetch(API_URL, {
+      const res = await fetch(`${API_URL}/api/properties`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeader()
+          "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(property),
+        body: JSON.stringify({
+          title:       formData.title,
+          description: formData.description,
+          price:       formData.price,
+          city:        formData.city,
+          lat:         formData.lat,
+          lng:         formData.lng,
+          rooms:       formData.rooms,
+          baths:       formData.baths,
+          parking:     formData.parking,
+          type:        (formData.type  || "Apartamento").toUpperCase(),
+          status:      (formData.status || "Venta").toUpperCase(),
+          images:      formData.images || [],
+          userId:      formData.publishedById,
+        }),
       });
-
-      if (!response.ok) throw new Error("No se pudo crear la propiedad");
-      const newProp = await response.json();
-      
-      // Actualizamos el estado de inmediato en la UI
-      setAllProperties((prev) => [newProp, ...prev]);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al publicar");
+      const newProp = normalizeProperty(data.property);
+      setProperties((prev) => [newProp, ...prev]);
       return newProp;
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("addProperty error:", err);
+      throw err;
     }
-  };
+  }, [getToken]);
 
-  // ── 3. ACTUALIZAR PROPIEDAD (PUT + TOKEN) ─────────────────────────
-  const updateProperty = async (id, updates) => {
+  // ── ACTUALIZAR PROPIEDAD ──────────────────────────────────────────────────
+  const updateProperty = useCallback(async (id, updates) => {
+    const token = getToken();
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const payload = { ...updates };
+      if (payload.type)   payload.type   = payload.type.toUpperCase();
+      if (payload.status) payload.status = payload.status.toUpperCase();
+
+      const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeader()
+          "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(updates),
+        body: JSON.stringify(payload),
       });
-
-      if (!response.ok) throw new Error("No se pudo actualizar la propiedad");
-      const updatedProp = await response.json();
-
-      // Sincronizar estados locales
-      const updateState = (prev) => prev.map((p) => (p.id === id ? { ...p, ...updatedProp } : p));
-      setAllProperties(updateState);
-      setPublished(updateState);
-    } catch (error) {
-      console.error(error);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al actualizar");
+      const updated = normalizeProperty(data.property);
+      setProperties((prev) => prev.map((p) => p.id === id ? updated : p));
+      return updated;
+    } catch (err) {
+      console.error("updateProperty error:", err);
+      throw err;
     }
-  };
+  }, [getToken]);
 
-  // ── 4. ELIMINAR PROPIEDAD (DELETE + TOKEN) ───────────────────────
-  const deleteProperty = async (id) => {
+  // ── ELIMINAR PROPIEDAD ────────────────────────────────────────────────────
+  const deleteProperty = useCallback(async (id) => {
+    const token = getToken();
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: "DELETE",
-        headers: getAuthHeader(),
+        headers: { "Authorization": `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error("No se pudo eliminar la propiedad");
-
-      // Remover del estado de la UI
-      const filterState = (prev) => prev.filter((p) => p.id !== id);
-      setAllProperties(filterState);
-      setPublished(filterState);
-    } catch (error) {
-      console.error(error);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Error al eliminar");
+      }
+      setProperties((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("deleteProperty error:", err);
+      throw err;
     }
-  };
+  }, [getToken]);
 
-  // ── FUNCIONES AUXILIARES DE LA UI ──────────────────────────────────
-  const verifyProperty = (id) => {
-    // Si tu backend tiene ruta para verificar, harías un fetch aquí. Si no, lo dejamos local:
-    const updateVerify = (prev) => prev.map((p) => p.id === id ? { ...p, verified: true } : p);
-    setAllProperties(updateVerify);
-    setPublished(updateVerify);
-  };
+  // ── FAVORITOS (localStorage hasta que hagamos el paso 3) ─────────────────
+  const toggleFavorite = useCallback((id) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((f) => f !== id)
+        : [...prev, id];
+      localStorage.setItem("domusrd-favorites", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  };
+  const isFavorite = useCallback((id) => favorites.includes(id), [favorites]);
 
-  const isFavorite = (id) => favorites.includes(id);
+  // ── QUERIES DERIVADAS ─────────────────────────────────────────────────────
+  const getUserProperties = useCallback(
+    (userId) => properties.filter((p) => {
+      const ownerId = typeof p.publishedBy === "object"
+        ? p.publishedBy?.id
+        : p.publishedById;
+      return ownerId === userId;
+    }),
+    [properties]
+  );
 
-  const getUserProperties = (userId) => 
-    allProperties.filter((p) => p.userId === userId || p.publishedById === userId);
+  const getFavoriteProperties = useCallback(
+    () => properties.filter((p) => favorites.includes(p.id)),
+    [properties, favorites]
+  );
 
-  const getFavoriteProperties = () =>
-    allProperties.filter((p) => favorites.includes(p.id));
+  // verifyProperty sigue siendo local (hasta que haya un endpoint admin)
+  const verifyProperty = useCallback((id) => {
+    setProperties((prev) => prev.map((p) => p.id === id ? { ...p, verified: true } : p));
+  }, []);
 
   return (
     <PropertiesContext.Provider value={{
-      allProperties, published, favorites,
-      addProperty, verifyProperty, updateProperty, deleteProperty,
-      toggleFavorite, isFavorite,
-      getUserProperties, getFavoriteProperties,
+      allProperties: properties,
+      published:     properties,   // alias para compatibilidad con Publish.js
+      favorites,
+      loading,
+      error,
+      fetchProperties,
+      addProperty,
+      updateProperty,
+      deleteProperty,
+      toggleFavorite,
+      isFavorite,
+      getUserProperties,
+      getFavoriteProperties,
+      verifyProperty,
     }}>
       {children}
     </PropertiesContext.Provider>
