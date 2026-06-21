@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const ROLES = [
   {
@@ -32,16 +33,26 @@ export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "Cliente" });
   const { login, register, error, setError, loading } = useAuth();
+  const { banner } = useToast();
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    const success = isLogin
+    const user = isLogin
       ? await login({ email: form.email, password: form.password })
       : await register({ name: form.name, email: form.email, password: form.password, role: form.role });
-    if (success) {
+    if (user) {
       onClose();
       setForm({ name: "", email: "", password: "", role: "Cliente" });
+      const firstName = user.name?.split(" ")[0] || form.name?.split(" ")[0] || "Usuario";
+      banner({
+        message: isLogin ? `¡Bienvenido de vuelta, ${firstName}! 👋` : `¡Cuenta creada, ${firstName}! 🎉`,
+        subtitle: isLogin
+          ? `Nos alegra tenerte de vuelta en DomusRD`
+          : `Ya puedes explorar y guardar propiedades`,
+        type: "success",
+        duration: 4500,
+      });
     }
   };
 

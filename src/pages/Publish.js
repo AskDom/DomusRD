@@ -31,7 +31,7 @@ const selectClass =
 export default function Publish() {
   const { addProperty, published } = useProperties();
   const { currentUser } = useAuth();
-  const { toast } = useToast();
+  const { toast, banner } = useToast();
 
   const isVendedor = currentUser?.role === "Vendedor";
   const myPublished = published.filter((p) => {
@@ -120,7 +120,7 @@ export default function Publish() {
       setForm({ title: "", price: "", description: "", type: "Apartamento", status: "Venta", rooms: 1, baths: 1, parking: 1, images: [], city: "", lat: "", lng: "" });
       setPosition(null);
       setSubmitted(true);
-      toast({ message: "¡Propiedad publicada con éxito! 🏠", type: "success" });
+      banner({ message: "🏠 ¡Propiedad publicada con éxito!", subtitle: `"${form.title}" ya está visible para todos en el feed`, type: "success", duration: 5000 });
       setTimeout(() => setSubmitted(false), 3000);
     } catch (err) {
       toast({ message: err.message || "Error al publicar la propiedad", type: "error" });

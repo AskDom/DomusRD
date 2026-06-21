@@ -1,80 +1,153 @@
-import React, { createContext, useContext } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const getToken = () => localStorage.getItem("domusrd-token");
 
 const InboxContext = createContext();
 
 export function InboxProvider({ children }) {
-  const [messages, setMessages] = useLocalStorage("domusrd-messages", []);
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
-  const sendMessage = ({ fromId, fromName, toId, toName, propertyId, propertyTitle, text, replyToId = null }) => {
-    const msg = {
-      id: Date.now(),
-      fromId,
-      fromName,
-      toId,
-      toName,
-      propertyId,
-      propertyTitle,
-      text,
-      replyToId,
+  // ── FETCH desde la BD ───────────────────────────────────────────────────────
+  const fetchMessages = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(`${API_URL}/api/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      // Normalizamos para que el shape sea idéntico al que usaba localStorage
+      const normalized = data.messages.map((m) => ({
+        id:            m.id,
+        fromId:        m.fromId,
+        fromName:      m.from?.name  || "Usuario",
+        toId:          m.toId,
+        toName:        m.to?.name    || "Usuario",
+        propertyId:    m.propertyId,
+        propertyTitle: m.property?.title || "",
+        text:          m.text,
+        replyToId:     m.replyToId,
+        createdAt:     m.createdAt,
+        read:          m.read,
+      }));
+      setMessages(normalized);
+    } catch (err) {
+      console.error("fetchMessages error:", err);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  // ── ENVIAR mensaje ──────────────────────────────────────────────────────────
+  const sendMessage = useCallback(async ({ fromId, fromName, toId, toName, propertyId, propertyTitle, text, replyToId = null }) => {
+    const token = getToken();
+    // Optimistic: lo agregamos localmente primero
+    const tempMsg = {
+      id: `temp-${Date.now()}`,
+      fromId, fromName, toId, toName,
+      propertyId, propertyTitle,
+      text, replyToId,
       createdAt: new Date().toISOString(),
       read: false,
     };
-    setMessages((prev) => [msg, ...prev]);
-    return msg;
-  };
+    setMessages((prev) => [tempMsg, ...prev]);
 
-  const replyMessage = ({ originalMsg, fromId, fromName, text }) => {
+    try {
+      const res = await fetch(`${API_URL}/api/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ toId, propertyId, text, replyToId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Reemplazamos el temp por el real (con UUID de la BD)
+      const real = {
+        id:            data.message.id,
+        fromId:        data.message.fromId,
+        fromName:      data.message.from?.name  || fromName,
+        toId:          data.message.toId,
+        toName:        data.message.to?.name    || toName,
+        propertyId:    data.message.propertyId,
+        propertyTitle: data.message.property?.title || propertyTitle,
+        text:          data.message.text,
+        replyToId:     data.message.replyToId,
+        createdAt:     data.message.createdAt,
+        read:          false,
+      };
+      setMessages((prev) => prev.map((m) => m.id === tempMsg.id ? real : m));
+      return real;
+    } catch (err) {
+      console.error("sendMessage error:", err);
+      // Revertimos el optimistic si falló
+      setMessages((prev) => prev.filter((m) => m.id !== tempMsg.id));
+      return null;
+    }
+  }, []);
+
+  // ── RESPONDER ───────────────────────────────────────────────────────────────
+  const replyMessage = useCallback(({ originalMsg, fromId, fromName, text }) => {
     return sendMessage({
-      fromId,
-      fromName,
-      toId: originalMsg.fromId,
-      toName: originalMsg.fromName,
-      propertyId: originalMsg.propertyId,
+      fromId, fromName,
+      toId:          originalMsg.fromId,
+      toName:        originalMsg.fromName,
+      propertyId:    originalMsg.propertyId,
       propertyTitle: originalMsg.propertyTitle,
       text,
       replyToId: originalMsg.id,
     });
-  };
+  }, [sendMessage]);
 
-  const markAsRead = (id) => {
-    setMessages((prev) =>
-      prev.map((m) => m.id === id ? { ...m, read: true } : m)
-    );
-  };
+  // ── MARCAR COMO LEÍDO ───────────────────────────────────────────────────────
+  const markAsRead = useCallback(async (id) => {
+    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, read: true } : m));
+    try {
+      await fetch(`${API_URL}/api/messages/${id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+    } catch (err) {
+      console.error("markAsRead error:", err);
+    }
+  }, []);
 
-  const deleteMessage = (id) => {
+  // ── ELIMINAR ────────────────────────────────────────────────────────────────
+  const deleteMessage = useCallback(async (id) => {
     setMessages((prev) => prev.filter((m) => m.id !== id));
-  };
+    try {
+      await fetch(`${API_URL}/api/messages/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+    } catch (err) {
+      console.error("deleteMessage error:", err);
+    }
+  }, []);
 
-  const getInbox = (userId) =>
-    messages.filter((m) => m.toId === userId);
+  // ── HELPERS (misma API que antes) ───────────────────────────────────────────
+  const getInbox  = useCallback((userId) => messages.filter((m) => m.toId   === userId), [messages]);
+  const getSent   = useCallback((userId) => messages.filter((m) => m.fromId === userId), [messages]);
+  const getUnreadCount = useCallback((userId) =>
+    messages.filter((m) => m.toId === userId && !m.read).length, [messages]);
 
-  const getSent = (userId) =>
-    messages.filter((m) => m.fromId === userId);
-
-  const getUnreadCount = (userId) =>
-    messages.filter((m) => m.toId === userId && !m.read).length;
-
-  // Agrupa mensajes en conversaciones por propiedad + participantes
-  const getConversations = (userId) => {
-    const relevant = messages.filter(
-      (m) => m.fromId === userId || m.toId === userId
-    );
-    const convMap = {};
+  const getConversations = useCallback((userId) => {
+    const relevant = messages.filter((m) => m.fromId === userId || m.toId === userId);
+    const convMap  = {};
     relevant.forEach((m) => {
-      const otherId = m.fromId === userId ? m.toId : m.fromId;
+      const otherId   = m.fromId === userId ? m.toId   : m.fromId;
+      const otherName = m.fromId === userId ? m.toName : m.fromName;
       const key = `${[userId, otherId].sort().join("-")}-${m.propertyId}`;
       if (!convMap[key]) {
-        convMap[key] = {
-          key,
-          otherId,
-          otherName: m.fromId === userId ? m.toName : m.fromName,
-          propertyId: m.propertyId,
-          propertyTitle: m.propertyTitle,
-          messages: [],
-          unread: 0,
-        };
+        convMap[key] = { key, otherId, otherName, propertyId: m.propertyId, propertyTitle: m.propertyTitle, messages: [], unread: 0 };
       }
       convMap[key].messages.push(m);
       if (m.toId === userId && !m.read) convMap[key].unread++;
@@ -82,11 +155,12 @@ export function InboxProvider({ children }) {
     return Object.values(convMap).sort(
       (a, b) => new Date(b.messages[0].createdAt) - new Date(a.messages[0].createdAt)
     );
-  };
+  }, [messages]);
 
   return (
     <InboxContext.Provider value={{
-      messages, sendMessage, replyMessage,
+      messages, loadingMessages, fetchMessages,
+      sendMessage, replyMessage,
       markAsRead, deleteMessage,
       getInbox, getSent, getUnreadCount, getConversations,
     }}>

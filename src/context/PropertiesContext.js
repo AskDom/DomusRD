@@ -22,11 +22,11 @@ const normalizeProperty = (p) => ({
 const PropertiesContext = createContext();
 
 export function PropertiesProvider({ children }) {
-  const { getToken } = useAuth();
+  const { getToken, currentUser } = useAuth();
 
   const [properties, setProperties]   = useState([]);
   const [favorites,  setFavorites]    = useState(() => {
-    try { return JSON.parse(localStorage.getItem("domusrd-favorites")) || []; }
+    try { return JSON.parse(localStorage.getItem("domusrd-favorites")) || []; } // migración inicial
     catch { return []; }
   });
   const [loading, setLoading]   = useState(true);
@@ -53,6 +53,32 @@ export function PropertiesProvider({ children }) {
   }, []);
 
   useEffect(() => { fetchProperties(); }, [fetchProperties]);
+
+  // ── FETCH FAVORITOS — se vuelve a ejecutar cada vez que cambia el usuario ──
+  const fetchFavorites = useCallback(async () => {
+    const token = localStorage.getItem('domusrd-token');
+    if (!token) {
+      // Si no hay usuario, limpiamos los favoritos
+      setFavorites([]);
+      localStorage.removeItem('domusrd-favorites');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setFavorites(data.favorites);
+      localStorage.setItem('domusrd-favorites', JSON.stringify(data.favorites));
+    } catch (err) {
+      console.error('fetchFavorites error:', err);
+    }
+  }, []);
+
+  // Se ejecuta al montar y cada vez que cambia el usuario (login/logout/cambio de cuenta)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchFavorites(); }, [currentUser?.id]);
 
   // ── PUBLICAR PROPIEDAD ────────────────────────────────────────────────────
   const addProperty = useCallback(async (formData) => {

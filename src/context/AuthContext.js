@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
       const user = normalizeUser(data.user); // VENDEDOR → Vendedor
       saveSession(data.token, user);
       setCurrentUser(user);
-      return true;
+      return user; // devolvemos el usuario completo
     } catch {
       setError("No se pudo conectar con el servidor. ¿Está corriendo el backend?");
       return false;
@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
       const user = normalizeUser(data.user); // AGENTE → Agente
       saveSession(data.token, user);
       setCurrentUser(user);
-      return true;
+      return user; // devolvemos el usuario completo
     } catch {
       setError("No se pudo conectar con el servidor. ¿Está corriendo el backend?");
       return false;

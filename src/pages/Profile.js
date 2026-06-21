@@ -17,6 +17,7 @@ export default function Profile() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [uploadingEdit, setUploadingEdit] = useState(false);
 
   if (!currentUser) {
     return (
@@ -39,13 +40,63 @@ export default function Profile() {
 
   const startEdit = (prop) => {
     setEditingId(prop.id);
-    setEditForm({ title: prop.title, price: prop.price, status: prop.status, type: prop.type, description: prop.description });
+    setEditForm({
+      title:       prop.title,
+      price:       prop.price,
+      status:      prop.status,
+      type:        prop.type,
+      description: prop.description,
+      images:      prop.images || (prop.image ? [prop.image] : []),
+    });
   };
 
-  const saveEdit = () => {
-    updateProperty(editingId, editForm);
-    setEditingId(null);
-    toast({ message: "Propiedad actualizada correctamente", type: "success" });
+  // Subir nuevas imágenes desde el formulario de edición
+  const handleEditImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const remaining = 6 - (editForm.images?.length || 0);
+    if (remaining <= 0) return toast({ message: "Máximo 6 fotos por propiedad", type: "error" });
+    const toProcess = files.slice(0, remaining);
+
+    setUploadingEdit(true);
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const token   = localStorage.getItem("domusrd-token");
+      const formData = new FormData();
+      toProcess.forEach((f) => formData.append("images", f));
+
+      const res  = await fetch(`${API_URL}/api/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al subir");
+      setEditForm((prev) => ({ ...prev, images: [...(prev.images || []), ...data.urls] }));
+    } catch (err) {
+      toast({ message: err.message || "Error al subir imágenes", type: "error" });
+    } finally {
+      setUploadingEdit(false);
+    }
+  };
+
+  // Eliminar una imagen del formulario de edición
+  const removeEditImage = (idx) => {
+    setEditForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const saveEdit = async () => {
+    try {
+      await updateProperty(editingId, editForm);
+      setEditingId(null);
+      toast({ message: "✅ Propiedad actualizada correctamente", type: "success" });
+    } catch (err) {
+      console.error("saveEdit error:", err);
+      toast({ message: err.message || "Error al guardar los cambios", type: "error" });
+    }
   };
 
   const handleDelete = (id) => {
@@ -180,6 +231,31 @@ export default function Profile() {
                             <option>Villa</option>
                           </select>
                           <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} placeholder="Descripción" className={`${inputClass} sm:col-span-2 resize-none h-16`} />
+                          {/* GESTOR DE IMÁGENES */}
+                          <div className="sm:col-span-2">
+                            <p className="text-xs text-gray-400 mb-2 font-medium">Fotos ({(editForm.images || []).length}/6)</p>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {(editForm.images || []).map((url, idx) => (
+                                <div key={idx} className="relative group">
+                                  <img src={url} alt="" className="w-16 h-16 object-cover rounded-xl border border-gray-200 dark:border-gray-600" />
+                                  {idx === 0 && (
+                                    <span className="absolute bottom-0 left-0 right-0 text-center text-white text-[9px] font-bold bg-black/50 rounded-b-xl py-0.5">portada</span>
+                                  )}
+                                  <button
+                                    onClick={() => removeEditImage(idx)}
+                                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                  >✕</button>
+                                </div>
+                              ))}
+                              {(editForm.images || []).length < 6 && (
+                                <label className="w-16 h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition text-gray-400 text-xs text-center leading-tight">
+                                  {uploadingEdit ? "⏳" : "+ Foto"}
+                                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleEditImageUpload} disabled={uploadingEdit} />
+                                </label>
+                              )}
+                            </div>
+                          </div>
+
                           <div className="sm:col-span-2 flex gap-2 justify-end">
                             <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded-xl text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 transition">Cancelar</button>
                             <button onClick={saveEdit} className="px-4 py-2 rounded-xl text-sm bg-blue-600 text-white hover:bg-blue-700 transition font-semibold">Guardar</button>
@@ -315,7 +391,7 @@ export default function Profile() {
             </div>
             <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                ⚠️ Esta es una demo con localStorage. En producción los datos estarían protegidos en un servidor.
+                🔒 Tus datos están protegidos en un servidor seguro.
               </p>
             </div>
           </div>
