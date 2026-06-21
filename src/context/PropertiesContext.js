@@ -164,15 +164,34 @@ export function PropertiesProvider({ children }) {
   }, [getToken]);
 
   // ── FAVORITOS (localStorage hasta que hagamos el paso 3) ─────────────────
-  const toggleFavorite = useCallback((id) => {
+  const toggleFavorite = useCallback(async (id) => {
+    const token = localStorage.getItem('domusrd-token');
+    if (!token) return;
+    const isCurrentlyFav = favorites.includes(id);
+
+    // Optimistic update — actualizamos la UI inmediatamente
     setFavorites((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((f) => f !== id)
-        : [...prev, id];
-      localStorage.setItem("domusrd-favorites", JSON.stringify(next));
+      const next = isCurrentlyFav ? prev.filter((f) => f !== id) : [...prev, id];
+      localStorage.setItem('domusrd-favorites', JSON.stringify(next));
       return next;
     });
-  }, []);
+
+    // Sincronizamos con la BD
+    try {
+      await fetch(`${API_URL}/api/favorites/${id}`, {
+        method: isCurrentlyFav ? 'DELETE' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (err) {
+      // Revertimos si falló
+      console.error('toggleFavorite sync error:', err);
+      setFavorites((prev) => {
+        const reverted = isCurrentlyFav ? [...prev, id] : prev.filter((f) => f !== id);
+        localStorage.setItem('domusrd-favorites', JSON.stringify(reverted));
+        return reverted;
+      });
+    }
+  }, [favorites]);
 
   const isFavorite = useCallback((id) => favorites.includes(id), [favorites]);
 
