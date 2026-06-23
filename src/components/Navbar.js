@@ -138,7 +138,8 @@ export default function Navbar() {
                     currentUser.role === "Agente" ? "text-yellow-500" :
                     currentUser.role === "Vendedor" ? "text-green-500" : "text-blue-500"
                   }`}>
-                    {currentUser.role === "Agente" ? "⭐ Agente" :
+                    {currentUser.role === "Admin" ? "🛡️ Admin" :
+                     currentUser.role === "Agente" ? "⭐ Agente" :
                      currentUser.role === "Vendedor" ? "🏠 Vendedor" : "👤 Cliente"}
                   </p>
                 </div>
@@ -154,6 +155,7 @@ export default function Navbar() {
                   </div>
                   {[
                     { to: "/profile", label: "Mi perfil", icon: "👤" },
+                    ...(currentUser.role === "Admin" ? [{ to: "/admin", label: "Panel admin", icon: "🛡️" }] : []),
                     { to: "/profile?tab=propiedades", label: "Mis propiedades", icon: "🏠" },
                     { to: "/favorites", label: "Favoritos", icon: "❤️" },
                     { to: "/inbox", label: "Inbox", icon: "✉️", badge: unread },

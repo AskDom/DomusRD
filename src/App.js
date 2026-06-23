@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/PageTransition";
 
@@ -35,6 +36,7 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           </PageTransition>
         } />
+        <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

@@ -15,14 +15,18 @@ const PROVINCIAS = [
   "Jarabacoa", "La Romana", "Baní", "San Cristóbal",
 ];
 
-const TAB_FILTERS = {
-  "Todos": () => true,
-  "Apartamentos": (p) => p.type === "Apartamento",
-  "Casas": (p) => p.type === "Casa",
-  "Villas": (p) => p.type === "Villa",
-  "En Venta": (p) => p.status === "Venta",
-  "En Renta": (p) => p.status === "Renta",
+// Mapeo de tab → parámetros de filtro para el backend
+const TAB_TO_FILTER = {
+  "Todos":       {},
+  "Apartamentos": { type: "APARTAMENTO" },
+  "Casas":        { type: "CASA" },
+  "Villas":       { type: "VILLA" },
+  "En Venta":     { status: "VENTA" },
+  "En Renta":     { status: "RENTA" },
 };
+
+// Filtro local solo para ordenar (el backend ya filtró)
+const TAB_FILTERS = { "Todos": () => true };
 
 const SORT_OPTIONS = [
   { value: "recent", label: "Más recientes" },
@@ -51,7 +55,7 @@ export default function Home() {
   const [sort, setSort] = useState("recent");
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
-  const { allProperties, toggleFavorite, isFavorite, loading: propertiesLoading } = useProperties();
+  const { allProperties, toggleFavorite, isFavorite, loading: propertiesLoading, pagination, fetchProperties, loadMore } = useProperties();
   const { toast } = useToast();
 
   const activeTab = searchParams.get("tab") || "Todos";
@@ -59,6 +63,13 @@ export default function Home() {
     allProperties.filter(TAB_FILTERS[activeTab] || (() => true)),
     sort
   );
+
+  // Refetch cuando cambia el tab activo
+  useEffect(() => {
+    const filters = TAB_TO_FILTER[activeTab] || {};
+    fetchProperties({ ...filters, page: 1 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   useEffect(() => {
     if (!propertiesLoading) {
@@ -294,6 +305,24 @@ export default function Home() {
             ))
           )}
         </div>
+
+        {/* CARGAR MÁS */}
+        {pagination.hasMore && (
+          <div className="flex justify-center mt-8 mb-4">
+            <button
+              onClick={() => loadMore(TAB_TO_FILTER[activeTab] || {})}
+              disabled={propertiesLoading}
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-8 py-3 rounded-2xl font-semibold shadow hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
+            >
+              {propertiesLoading ? "Cargando..." : `Cargar más · ${pagination.total - allProperties.length} restantes`}
+            </button>
+          </div>
+        )}
+        {!pagination.hasMore && allProperties.length > 0 && (
+          <p className="text-center text-gray-400 text-sm py-6">
+            Mostrando todas las propiedades ({pagination.total})
+          </p>
+        )}
       </div>
 
       <Footer />

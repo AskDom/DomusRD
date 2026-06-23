@@ -7,7 +7,7 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 // El backend guarda roles en MAYÚSCULAS (VENDEDOR, AGENTE, CLIENTE)
 // El frontend los compara con mayúscula inicial (Vendedor, Agente, Cliente)
 // Normalizamos aquí una sola vez para no tocar ningún otro archivo
-const ROLE_DISPLAY = { CLIENTE: "Cliente", VENDEDOR: "Vendedor", AGENTE: "Agente" };
+const ROLE_DISPLAY = { CLIENTE: "Cliente", VENDEDOR: "Vendedor", AGENTE: "Agente", ADMIN: "Admin" };
 const normalizeUser = (user) => ({ ...user, role: ROLE_DISPLAY[user.role] || user.role });
 
 // ─── SESSION HELPERS ─────────────────────────────────────────────────────────

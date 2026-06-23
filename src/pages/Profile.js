@@ -35,7 +35,7 @@ export default function Profile() {
     );
   }
 
-  const myProperties = getUserProperties(currentUser.id);
+  const myProperties = getUserProperties();
   const favoriteProperties = getFavoriteProperties();
 
   const startEdit = (prop) => {
