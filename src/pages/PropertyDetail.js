@@ -10,6 +10,7 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
+import ReviewSection from "../components/ReviewSection";
 import { useToast } from "../context/ToastContext";
 
 const extraImages = {
@@ -529,6 +530,11 @@ export default function PropertyDetail() {
         )}
 
       </motion.div>
+      {property && (
+        <div className="max-w-5xl mx-auto px-4 pb-16">
+          <ReviewSection propertyId={property.id} publishedById={publishedById} />
+        </div>
+      )}
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
