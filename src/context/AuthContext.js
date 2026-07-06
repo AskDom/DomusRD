@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-// El backend guarda roles en MAYÚSCULAS — normalizamos a mayúscula inicial
 const ROLE_DISPLAY = { CLIENTE: "Cliente", VENDEDOR: "Vendedor", AGENTE: "Agente", ADMIN: "Admin" };
 const normalizeUser = (user) => ({ ...user, role: ROLE_DISPLAY[user.role] || user.role });
 
@@ -14,7 +13,7 @@ const clearSession = () => {
   localStorage.removeItem("domusrd-token");
   localStorage.removeItem("domusrd-session");
 };
-const loadSession  = () => {
+const loadSession = () => {
   try { const u = localStorage.getItem("domusrd-session"); return u ? JSON.parse(u) : null; }
   catch { return null; }
 };
@@ -25,14 +24,12 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(loadSession);
   const [error,       setError]       = useState("");
   const [loading,     setLoading]     = useState(false);
-  const [bootDone,    setBootDone]    = useState(false);
 
-  // ── AL ARRANCAR: verificar el token con el backend ────────────────────────
-  // Esto garantiza que si el rol cambió en la BD (ej. ADMIN),
-  // el frontend lo refleja sin necesidad de cerrar sesión manualmente
+  // Al arrancar: verificar token con backend para refrescar el rol
+  // Si falla, simplemente seguimos con la sesión guardada en localStorage
   useEffect(() => {
     const token = localStorage.getItem("domusrd-token");
-    if (!token) { setBootDone(true); return; }
+    if (!token) return;
 
     fetch(`${API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -40,19 +37,20 @@ export function AuthProvider({ children }) {
       .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then((data) => {
         const user = normalizeUser(data.user);
-        // Actualizamos sesión con los datos frescos de la BD (rol incluido)
         localStorage.setItem("domusrd-session", JSON.stringify(user));
         setCurrentUser(user);
       })
       .catch((status) => {
-        // Token inválido o expirado — limpiamos sesión
-        if (status === 401 || status === 403) clearSession();
-        setCurrentUser(null);
-      })
-      .finally(() => setBootDone(true));
+        // Token expirado o inválido — limpiar sesión
+        if (status === 401 || status === 403) {
+          clearSession();
+          setCurrentUser(null);
+        }
+        // Cualquier otro error (red, servidor caído) — seguimos con sesión local
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── REGISTER ──────────────────────────────────────────────────────────────
   const register = useCallback(async ({ name, email, password, role }) => {
     setError(""); setLoading(true);
     try {
@@ -73,7 +71,6 @@ export function AuthProvider({ children }) {
     } finally { setLoading(false); }
   }, []);
 
-  // ── LOGIN ─────────────────────────────────────────────────────────────────
   const login = useCallback(async ({ email, password }) => {
     setError(""); setLoading(true);
     try {
@@ -94,7 +91,6 @@ export function AuthProvider({ children }) {
     } finally { setLoading(false); }
   }, []);
 
-  // ── LOGOUT ────────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
     clearSession();
     setCurrentUser(null);
@@ -102,8 +98,8 @@ export function AuthProvider({ children }) {
 
   const getToken = useCallback(() => localStorage.getItem("domusrd-token"), []);
 
-  // Mientras verifica el token no renderizamos nada — evita flash de rol incorrecto
-  if (!bootDone) return null;
+  // ← Ya NO bloqueamos el render — la app carga inmediatamente
+  // El rol se actualiza en segundo plano cuando /api/auth/me responde
 
   return (
     <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, getToken }}>
