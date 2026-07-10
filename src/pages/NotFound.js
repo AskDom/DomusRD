@@ -1,73 +1,174 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import Navbar from "../components/Navbar";
+
+// Casas flotantes de fondo
+const FLOATING_HOUSES = Array.from({ length: 8 }, (_, i) => ({
+  id: i,
+  x: 5 + (i * 13) % 90,
+  size: 24 + (i * 7) % 32,
+  duration: 6 + (i * 1.3) % 6,
+  delay: i * 0.7,
+  opacity: 0.04 + (i * 0.008),
+}));
 
 export default function NotFound() {
   const navigate = useNavigate();
+  const [count, setCount] = useState(5);
+
+  // Countdown para redirigir automáticamente
+  useEffect(() => {
+    if (count <= 0) { navigate("/"); return; }
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300 flex flex-col">
-      <Navbar />
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1a56db 100%)" }}
+    >
+      {/* Casas flotantes de fondo */}
+      {FLOATING_HOUSES.map((h) => (
+        <motion.div
+          key={h.id}
+          className="absolute text-white select-none pointer-events-none"
+          style={{ left: `${h.x}%`, bottom: "-10%", fontSize: h.size, opacity: h.opacity }}
+          animate={{ y: [0, -window.innerHeight * 1.2] }}
+          transition={{ duration: h.duration, delay: h.delay, repeat: Infinity, ease: "linear" }}
+        >
+          🏠
+        </motion.div>
+      ))}
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
+      {/* Círculos decorativos */}
+      <div className="absolute top-[-120px] right-[-120px] w-96 h-96 rounded-full opacity-10"
+        style={{ background: "radial-gradient(circle, #60a5fa, transparent)" }}/>
+      <div className="absolute bottom-[-80px] left-[-80px] w-72 h-72 rounded-full opacity-10"
+        style={{ background: "radial-gradient(circle, #34d399, transparent)" }}/>
 
-        {/* NÚMERO 404 ANIMADO */}
+      {/* Contenido principal */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-2xl">
+
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-2 mb-12"
+        >
+          <span className="text-2xl">🏠</span>
+          <span className="text-white font-black text-xl tracking-tight">DomusRD</span>
+        </motion.div>
+
+        {/* Número 404 */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", duration: 0.6 }}
-          className="relative mb-6"
+          transition={{ type: "spring", damping: 14, stiffness: 200, delay: 0.1 }}
+          className="relative mb-4"
         >
-          <p className="text-[10rem] md:text-[14rem] font-black text-gray-100 dark:text-gray-800 leading-none select-none">
+          {/* 404 grande */}
+          <p className="font-black text-white select-none leading-none"
+            style={{ fontSize: "clamp(100px, 22vw, 200px)", opacity: 0.12, letterSpacing: "-8px" }}
+          >
             404
           </p>
+
+          {/* Casa animada encima */}
           <motion.div
-            animate={{ y: [0, -12, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-            className="absolute inset-0 flex items-center justify-center text-7xl md:text-8xl"
+            animate={{ y: [0, -16, 0], rotate: [-2, 2, -2] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ fontSize: "clamp(60px, 12vw, 100px)" }}
           >
             🏚️
           </motion.div>
         </motion.div>
 
-        {/* TEXTO */}
+        {/* Texto */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
+          className="mb-10"
         >
-          <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-3">
-            Página no encontrada
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
+            Esta propiedad<br/>
+            <span style={{ background: "linear-gradient(135deg, #60a5fa, #34d399)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              no existe
+            </span>
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-lg max-w-md mb-8">
-            La propiedad que buscas no existe o fue eliminada. Explora nuestro catálogo completo.
+          <p className="text-blue-200 text-base md:text-lg max-w-md mx-auto leading-relaxed">
+            La página que buscas fue eliminada, movida o nunca existió. Pero tenemos cientos de propiedades increíbles esperándote.
           </p>
         </motion.div>
 
-        {/* ACCIONES */}
+        {/* Botones */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="flex flex-wrap gap-3 justify-center"
+          className="flex flex-wrap gap-3 justify-center mb-10"
         >
-          <button
-            onClick={() => navigate(-1)}
-            className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-semibold transition"
-          >
-            ← Volver atrás
-          </button>
-          <Link to="/">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-semibold transition shadow-lg">
-              🏠 Ir al inicio
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <Link to="/">
+              <button
+                className="text-white px-8 py-4 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-2"
+                style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}
+              >
+                🏠 Ir al inicio
+              </button>
+            </Link>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <button
+              onClick={() => navigate(-1)}
+              className="text-white/90 hover:text-white px-8 py-4 rounded-2xl font-bold text-sm border border-white/20 hover:border-white/40 hover:bg-white/10 transition backdrop-blur"
+            >
+              ← Volver atrás
             </button>
-          </Link>
-          <Link to="/search?q=República Dominicana">
-            <button className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-semibold transition">
-              🔍 Ver propiedades
-            </button>
-          </Link>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <Link to="/search?q=Santo Domingo">
+              <button className="text-white/90 hover:text-white px-8 py-4 rounded-2xl font-bold text-sm border border-white/20 hover:border-white/40 hover:bg-white/10 transition backdrop-blur">
+                🔍 Ver propiedades
+              </button>
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Countdown */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="flex flex-col items-center gap-3"
+        >
+          <p className="text-blue-300/70 text-sm">
+            Redirigiendo al inicio en{" "}
+            <motion.span
+              key={count}
+              initial={{ scale: 1.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="font-black text-white"
+            >
+              {count}
+            </motion.span>
+            {" "}segundos
+          </p>
+
+          {/* Barra de progreso */}
+          <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(90deg, #60a5fa, #34d399)" }}
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: 5, ease: "linear" }}
+            />
+          </div>
         </motion.div>
 
       </div>
