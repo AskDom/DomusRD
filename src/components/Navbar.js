@@ -54,6 +54,7 @@ export default function Navbar() {
   const location = useLocation();
   const { dark, toggleDark } = useTheme();
   const { currentUser, logout } = useAuth();
+  const { unreadCount } = useInbox();
   const { favorites } = useProperties();
   const { getUnreadCount } = useInbox();
   const unread = currentUser ? getUnreadCount(currentUser.id) : 0;

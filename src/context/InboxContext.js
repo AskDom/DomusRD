@@ -1,26 +1,27 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-const getToken = () => localStorage.getItem("domusrd-token");
-
+const API_URL    = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const getToken   = () => localStorage.getItem("domusrd-token");
 const InboxContext = createContext();
 
 export function InboxProvider({ children }) {
-  const [messages, setMessages] = useState([]);
+  const [messages,       setMessages]       = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [unreadCount,    setUnreadCount]    = useState(0);
+  const socketRef = useRef(null);
 
-  // ── FETCH desde la BD ───────────────────────────────────────────────────────
+  // ── FETCH ──────────────────────────────────────────────────────────────────
   const fetchMessages = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     setLoadingMessages(true);
     try {
-      const res = await fetch(`${API_URL}/api/messages`, {
+      const res  = await fetch(`${API_URL}/api/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
       const data = await res.json();
-      // Normalizamos para que el shape sea idéntico al que usaba localStorage
       const normalized = data.messages.map((m) => ({
         id:            m.id,
         fromId:        m.fromId,
@@ -44,33 +45,91 @@ export function InboxProvider({ children }) {
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
-  // ── ENVIAR mensaje ──────────────────────────────────────────────────────────
+  // Calcular no leídos
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    // Extraer userId del token
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const myId    = payload.id || payload.userId;
+      const count   = messages.filter((m) => m.toId === myId && !m.read).length;
+      setUnreadCount(count);
+    } catch {}
+  }, [messages]);
+
+  // ── WEBSOCKET ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    const socket = io(API_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 2000,
+    });
+
+    // Nuevo mensaje entrante — agregarlo al estado inmediatamente
+    socket.on("new_message", (msg) => {
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === msg.id);
+        if (exists) return prev;
+        return [msg, ...prev];
+      });
+      setUnreadCount((n) => n + 1);
+      // Notificación del navegador
+      if (Notification.permission === "granted") {
+        new Notification(`Nuevo mensaje de ${msg.fromName}`, {
+          body: msg.text,
+          icon: "/favicon.ico",
+        });
+      }
+    });
+
+    // Confirmación de mensaje enviado (reemplaza el temporal)
+    socket.on("message_sent", (msg) => {
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === msg.id);
+        if (exists) return prev;
+        // Reemplazar el temp si existe
+        const withoutTemp = prev.filter((m) => !m.id.startsWith("temp-"));
+        return [msg, ...withoutTemp];
+      });
+    });
+
+    socketRef.current = socket;
+    return () => { socket.disconnect(); socketRef.current = null; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── PEDIR PERMISO NOTIFICACIONES ───────────────────────────────────────────
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // ── ENVIAR ─────────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async ({ fromId, fromName, toId, toName, propertyId, propertyTitle, text, replyToId = null }) => {
     const token = getToken();
-    // Optimistic: lo agregamos localmente primero
     const tempMsg = {
       id: `temp-${Date.now()}`,
       fromId, fromName, toId, toName,
-      propertyId, propertyTitle,
-      text, replyToId,
+      propertyId, propertyTitle, text, replyToId,
       createdAt: new Date().toISOString(),
       read: false,
     };
     setMessages((prev) => [tempMsg, ...prev]);
 
     try {
-      const res = await fetch(`${API_URL}/api/messages`, {
+      const res  = await fetch(`${API_URL}/api/messages`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ toId, propertyId, text, replyToId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
-      // Reemplazamos el temp por el real (con UUID de la BD)
       const real = {
         id:            data.message.id,
         fromId:        data.message.fromId,
@@ -84,18 +143,18 @@ export function InboxProvider({ children }) {
         createdAt:     data.message.createdAt,
         read:          false,
       };
+      // Reemplazar el temp por el real
       setMessages((prev) => prev.map((m) => m.id === tempMsg.id ? real : m));
       return real;
     } catch (err) {
       console.error("sendMessage error:", err);
-      // Revertimos el optimistic si falló
       setMessages((prev) => prev.filter((m) => m.id !== tempMsg.id));
       return null;
     }
   }, []);
 
-  // ── RESPONDER ───────────────────────────────────────────────────────────────
-  const replyMessage = useCallback(({ originalMsg, fromId, fromName, text }) => {
+  // ── RESPONDER ──────────────────────────────────────────────────────────────
+  const replyMessage = useCallback(async ({ originalMsg, fromId, fromName, text }) => {
     return sendMessage({
       fromId, fromName,
       toId:          originalMsg.fromId,
@@ -107,9 +166,10 @@ export function InboxProvider({ children }) {
     });
   }, [sendMessage]);
 
-  // ── MARCAR COMO LEÍDO ───────────────────────────────────────────────────────
+  // ── MARCAR LEÍDO ───────────────────────────────────────────────────────────
   const markAsRead = useCallback(async (id) => {
     setMessages((prev) => prev.map((m) => m.id === id ? { ...m, read: true } : m));
+    setUnreadCount((n) => Math.max(0, n - 1));
     try {
       await fetch(`${API_URL}/api/messages/${id}/read`, {
         method: "PATCH",
@@ -120,7 +180,7 @@ export function InboxProvider({ children }) {
     }
   }, []);
 
-  // ── ELIMINAR ────────────────────────────────────────────────────────────────
+  // ── ELIMINAR ───────────────────────────────────────────────────────────────
   const deleteMessage = useCallback(async (id) => {
     setMessages((prev) => prev.filter((m) => m.id !== id));
     try {
@@ -133,7 +193,7 @@ export function InboxProvider({ children }) {
     }
   }, []);
 
-  // ── HELPERS (misma API que antes) ───────────────────────────────────────────
+  // ── HELPERS ────────────────────────────────────────────────────────────────
   const getInbox  = useCallback((userId) => messages.filter((m) => m.toId   === userId), [messages]);
   const getSent   = useCallback((userId) => messages.filter((m) => m.fromId === userId), [messages]);
   const getUnreadCount = useCallback((userId) =>
@@ -159,8 +219,8 @@ export function InboxProvider({ children }) {
 
   return (
     <InboxContext.Provider value={{
-      messages, loadingMessages, fetchMessages,
-      sendMessage, replyMessage,
+      messages, loadingMessages, unreadCount,
+      fetchMessages, sendMessage, replyMessage,
       markAsRead, deleteMessage,
       getInbox, getSent, getUnreadCount, getConversations,
     }}>
