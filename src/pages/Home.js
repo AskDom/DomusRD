@@ -1,4 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl:       require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
+});
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -9,6 +19,34 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useToast } from "../context/ToastContext";
+
+// Ícono de precio en el mapa
+function createPriceIcon(price, status, isActive) {
+  const formatted = price >= 1000000
+    ? `$${(price / 1000000).toFixed(1)}M`
+    : price >= 1000 ? `$${Math.round(price / 1000)}K` : `$${price}`;
+  const bg = isActive ? "#1a56db" : status === "Renta" ? "#059669" : "#111827";
+  return L.divIcon({
+    className: "",
+    html: `<div style="background:${bg};color:white;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid white;transform:${isActive ? "scale(1.12)" : "scale(1)"};transition:all 0.2s">${formatted}</div><div style="width:8px;height:8px;background:${bg};margin:-1px auto 0;clip-path:polygon(0 0,100% 0,50% 100%)"></div>`,
+    iconSize: [72, 36], iconAnchor: [36, 36], popupAnchor: [0, -38],
+  });
+}
+
+// Ajusta el mapa a los bounds de las propiedades
+function MapFit({ properties }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!properties.length) return;
+    const valid = properties.filter(p => p.lat && p.lng);
+    if (!valid.length) return;
+    if (valid.length === 1) { map.setView([valid[0].lat, valid[0].lng], 14); return; }
+    const bounds = L.latLngBounds(valid.map(p => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [48, 48] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties.length]);
+  return null;
+}
 
 const PROVINCIAS = [
   "Santo Domingo", "Santiago", "Punta Cana", "Samaná",
@@ -184,6 +222,8 @@ export default function Home() {
   const [sort,          setSort]          = useState("recent");
   const [showHistory,   setShowHistory]   = useState(false);
   const [heroIndex,     setHeroIndex]     = useState(0);
+  const [viewMode,      setViewMode]      = useState("grid"); // "grid" | "map"
+  const [activePin,     setActivePin]     = useState(null);
   const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
 
   const navigate      = useNavigate();
@@ -438,54 +478,158 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-            >
-              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <button
-              onClick={() => handleSearch("República Dominicana")}
-              className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline whitespace-nowrap"
-            >
-              Ver todas →
-            </button>
+            {viewMode === "grid" && (
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              >
+                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            )}
+            {/* Toggle vista */}
+            <div className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
+              <button
+                onClick={() => setViewMode("grid")}
+                title="Vista cuadrícula"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === "grid"
+                    ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                Lista
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                title="Vista mapa"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === "map"
+                    ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Mapa
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {loading ? (
-            [...Array(8)].map((_, i) => <PropertyCardSkeleton key={i} />)
-          ) : filtered.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="col-span-full text-center py-20"
-            >
-              <p className="text-6xl mb-4">🏚️</p>
-              <p className="text-gray-500 dark:text-gray-400 font-semibold text-lg">No hay propiedades en esta categoría</p>
-              <button onClick={() => handleTabChange("Todos")} className="mt-4 text-blue-600 font-semibold text-sm hover:underline">
-                Ver todas las propiedades
-              </button>
-            </motion.div>
-          ) : (
-            filtered.map((prop, i) => (
-              <PropertyCard
-                key={prop.id}
-                prop={prop}
-                index={i}
-                toggleFavorite={toggleFavorite}
-                isFavorite={isFavorite}
-                toast={toast}
-              />
-            ))
-          )}
-        </div>
+        {/* VISTA CUADRÍCULA */}
+        <AnimatePresence mode="wait">
+        {viewMode === "grid" && (
+          <motion.div
+            key="grid"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+          >
+            {loading ? (
+              [...Array(8)].map((_, i) => <PropertyCardSkeleton key={i} />)
+            ) : filtered.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="col-span-full text-center py-20"
+              >
+                <p className="text-6xl mb-4">🏚️</p>
+                <p className="text-gray-500 dark:text-gray-400 font-semibold text-lg">No hay propiedades en esta categoría</p>
+                <button onClick={() => handleTabChange("Todos")} className="mt-4 text-blue-600 font-semibold text-sm hover:underline">
+                  Ver todas las propiedades
+                </button>
+              </motion.div>
+            ) : (
+              filtered.map((prop, i) => (
+                <PropertyCard
+                  key={prop.id}
+                  prop={prop}
+                  index={i}
+                  toggleFavorite={toggleFavorite}
+                  isFavorite={isFavorite}
+                  toast={toast}
+                />
+              ))
+            )}
+          </motion.div>
+        )}
 
-        {/* Cargar más */}
-        {pagination.hasMore && (
+        {/* VISTA MAPA */}
+        {viewMode === "map" && (
+          <motion.div
+            key="map"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md"
+            style={{ height: 620 }}
+          >
+            {loading ? (
+              <div className="w-full h-full bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
+                <p className="text-gray-400 text-sm">Cargando mapa...</p>
+              </div>
+            ) : (
+              <MapContainer
+                center={[18.7357, -70.1627]}
+                zoom={8}
+                scrollWheelZoom={true}
+                style={{ height: "100%", width: "100%", zIndex: 0 }}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                <MapFit properties={filtered.filter(p => p.lat && p.lng)} />
+                {filtered.filter(p => p.lat && p.lng).map((prop) => (
+                  <Marker
+                    key={prop.id}
+                    position={[prop.lat, prop.lng]}
+                    icon={createPriceIcon(prop.price, prop.status, activePin === prop.id)}
+                    eventHandlers={{
+                      mouseover: () => setActivePin(prop.id),
+                      mouseout:  () => setActivePin(null),
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-sm min-w-[180px]">
+                        {prop.image && (
+                          <img src={prop.image} alt={prop.title}
+                            className="w-full h-28 object-cover rounded-xl mb-2"/>
+                        )}
+                        <div className="flex gap-1.5 mb-1.5 flex-wrap">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            prop.status === "Venta" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                          }`}>{prop.status}</span>
+                          <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold">{prop.type}</span>
+                        </div>
+                        <p className="font-bold text-gray-900 leading-snug text-sm">{prop.title}</p>
+                        <p className="text-blue-600 font-black mt-1">
+                          ${Number(prop.price).toLocaleString()}
+                          {prop.status === "Renta" && <span className="text-gray-400 font-normal text-xs">/mes</span>}
+                        </p>
+                        <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city}</p>
+                        <div className="flex gap-2 mt-1.5 text-xs text-gray-500">
+                          <span>🛏 {prop.rooms}</span>
+                          <span>🛁 {prop.baths}</span>
+                          {prop.parking > 0 && <span>🚗 {prop.parking}</span>}
+                        </div>
+                        <a href={`/property/${prop.id}`}
+                          className="block mt-2.5 bg-gray-900 text-white text-center py-2 rounded-xl text-xs font-bold hover:bg-gray-700 transition">
+                          Ver detalles →
+                        </a>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            )}
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* Cargar más — solo en vista cuadrícula */}
+        {viewMode === "grid" && pagination.hasMore && (
           <div className="flex justify-center mt-10">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -498,7 +642,7 @@ export default function Home() {
             </motion.button>
           </div>
         )}
-        {!pagination.hasMore && allProperties.length > 0 && (
+        {viewMode === "grid" && !pagination.hasMore && allProperties.length > 0 && (
           <p className="text-center text-gray-400 text-sm py-8">
             Mostrando todas las propiedades ({pagination.total})
           </p>
