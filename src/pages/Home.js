@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl:       require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
-});
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
@@ -19,6 +12,13 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useToast } from "../context/ToastContext";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl:       require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
+});
 
 // Ícono de precio en el mapa
 function createPriceIcon(price, status, isActive) {
