@@ -37,6 +37,33 @@ export default function Inbox() {
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
+  // Todos los hooks ANTES de cualquier return condicional
+  const allConversations = currentUser ? getConversations(currentUser.id) : [];
+  const conversations    = allConversations.filter((c) =>
+    !search || c.otherName.toLowerCase().includes(search.toLowerCase()) ||
+    c.propertyTitle.toLowerCase().includes(search.toLowerCase())
+  );
+  const selectedConv = conversations.find((c) => c.key === selectedKey) || allConversations.find((c) => c.key === selectedKey);
+
+  // Marcar como leídos al abrir conversación
+  useEffect(() => {
+    if (!selectedConv || !currentUser) return;
+    selectedConv.messages
+      .filter((m) => m.toId === currentUser.id && !m.read)
+      .forEach((m) => markAsRead(m.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKey]);
+
+  // Scroll al último mensaje
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedConv?.messages?.length]);
+
+  // Focus en el input al abrir conversación
+  useEffect(() => {
+    if (selectedKey) setTimeout(() => inputRef.current?.focus(), 100);
+  }, [selectedKey]);
+
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
@@ -49,31 +76,6 @@ export default function Inbox() {
       </div>
     );
   }
-
-  const allConversations = getConversations(currentUser.id);
-  const conversations    = allConversations.filter((c) =>
-    !search || c.otherName.toLowerCase().includes(search.toLowerCase()) ||
-    c.propertyTitle.toLowerCase().includes(search.toLowerCase())
-  );
-  const selectedConv = conversations.find((c) => c.key === selectedKey) || allConversations.find((c) => c.key === selectedKey);
-
-  // Marcar como leídos al abrir conversación
-  useEffect(() => {
-    if (!selectedConv) return;
-    selectedConv.messages
-      .filter((m) => m.toId === currentUser.id && !m.read)
-      .forEach((m) => markAsRead(m.id));
-  }, [selectedKey, selectedConv]);
-
-  // Scroll al último mensaje
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedConv?.messages.length]);
-
-  // Focus en el input al abrir conversación
-  useEffect(() => {
-    if (selectedKey) setTimeout(() => inputRef.current?.focus(), 100);
-  }, [selectedKey]);
 
   const handleSend = async () => {
     if (!replyText.trim() || !selectedConv || sending) return;
