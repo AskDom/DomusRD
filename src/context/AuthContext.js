@@ -60,7 +60,12 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ name, email, password, role }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al crear la cuenta."); return false; }
+      if (!res.ok) {
+        // Si hay errores de campo específicos, mostramos el primero
+        const msg = data.fields?.[0]?.message || data.error || "Error al crear la cuenta.";
+        setError(msg);
+        return false;
+      }
       const user = normalizeUser(data.user);
       saveSession(data.token, user);
       setCurrentUser(user);
@@ -80,7 +85,11 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Correo o contraseña incorrectos."); return false; }
+      if (!res.ok) {
+        const msg = data.fields?.[0]?.message || data.error || "Correo o contraseña incorrectos.";
+        setError(msg);
+        return false;
+      }
       const user = normalizeUser(data.user);
       saveSession(data.token, user);
       setCurrentUser(user);

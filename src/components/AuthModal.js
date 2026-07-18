@@ -43,6 +43,24 @@ export default function AuthModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
+    // Validación del lado del cliente
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email.trim() || !emailRegex.test(form.email)) {
+      setError("Ingresa un correo electrónico válido");
+      return;
+    }
+    if (!form.password || form.password.length < 5) {
+      setError("La contraseña debe tener al menos 5 caracteres");
+      return;
+    }
+    if (!isLogin) {
+      if (!form.name.trim() || form.name.trim().length < 2) {
+        setError("El nombre debe tener al menos 2 caracteres");
+        return;
+      }
+    }
+    setError("");
+
     const user = isLogin
       ? await login({ email: form.email, password: form.password })
       : await register({ name: form.name, email: form.email, password: form.password, role: form.role });
