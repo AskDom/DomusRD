@@ -301,27 +301,27 @@ export default function PropertyDetail() {
                 📍 {property.city || "República Dominicana"}
               </p>
 
-              {/* PRECIO + STATS EN LA MISMA CARD */}
-              <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
-                    {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
-                  </p>
-                  <p className="text-4xl font-black text-blue-600 dark:text-blue-400 leading-none">
-                    ${Number(property.price).toLocaleString()}
-                    {property.status === "Renta" && <span className="text-base font-normal text-gray-400 ml-1">/mes</span>}
-                  </p>
-                </div>
-                <div className="flex gap-3">
+              {/* PRECIO — protagonista de la card */}
+              <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                  {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
+                </p>
+                <p className="text-5xl md:text-6xl font-black text-blue-600 dark:text-blue-400 leading-none tracking-tight">
+                  ${Number(property.price).toLocaleString()}
+                  {property.status === "Renta" && <span className="text-lg font-normal text-gray-400 ml-2">/mes</span>}
+                </p>
+
+                {/* STATS — chips secundarios, ya no compiten con el precio */}
+                <div className="flex flex-wrap gap-2 mt-4">
                   {[
                     { icon: "🛏️", value: property.rooms, label: "hab" },
                     { icon: "🛁", value: property.baths, label: "baños" },
                     { icon: "🚗", value: property.parking, label: "parq" },
                   ].map((s) => (
-                    <div key={s.label} className="bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 text-center min-w-[64px] transition-colors">
-                      <p className="text-xl">{s.icon}</p>
-                      <p className="text-lg font-black text-gray-900 dark:text-white leading-none mt-1">{s.value}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                    <div key={s.label} className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 rounded-full px-3.5 py-2 transition-colors">
+                      <span className="text-sm">{s.icon}</span>
+                      <span className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</span>
+                      <span className="text-gray-400 text-xs">{s.label}</span>
                     </div>
                   ))}
                 </div>
@@ -447,19 +447,22 @@ export default function PropertyDetail() {
                     </div>
                   )}
 
-                  {/* BOTONES */}
-                  <button
-                    onClick={handleWhatsApp}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-2xl font-bold transition shadow-md flex items-center justify-center gap-2"
-                  >
-                    💬 WhatsApp
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-3 rounded-2xl font-semibold transition flex items-center justify-center gap-2"
-                  >
-                    {copied ? "✅ Copiado" : "🔗 Compartir"}
-                  </button>
+                  {/* BOTONES — WhatsApp (principal) + Compartir (icon-only) en una sola fila */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleWhatsApp}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-2xl font-bold transition shadow-md flex items-center justify-center gap-2"
+                    >
+                      💬 WhatsApp
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      title="Compartir"
+                      className="w-12 shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-2xl transition flex items-center justify-center text-lg"
+                    >
+                      {copied ? "✅" : "🔗"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
