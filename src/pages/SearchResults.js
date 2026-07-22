@@ -132,21 +132,23 @@ export default function SearchResults() {
         </div>
 
         <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className={selectClass}>
-          <option value="">Venta o Renta</option>
-          <option value="Venta">En Venta</option>
-          <option value="Renta">En Renta</option>
+          <option value="" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Venta o Renta</option>
+          <option value="Venta" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">En Venta</option>
+          <option value="Renta" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">En Renta</option>
         </select>
 
         <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className={selectClass}>
-          <option value="">Tipo</option>
-          <option value="Apartamento">Apartamento</option>
-          <option value="Casa">Casa</option>
-          <option value="Villa">Villa</option>
+          <option value="" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Tipo</option>
+          <option value="Apartamento" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Apartamento</option>
+          <option value="Casa" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Casa</option>
+          <option value="Villa" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Villa</option>
         </select>
 
         <select value={filters.rooms} onChange={(e) => setFilters({ ...filters, rooms: e.target.value })} className={selectClass}>
-          <option value="">Habitaciones</option>
-          {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}+ hab</option>)}
+          <option value="" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">Habitaciones</option>
+          {[1,2,3,4,5].map((n) => (
+            <option key={n} value={n} className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">{n}+ hab</option>
+          ))}
         </select>
 
         <div className="flex items-center gap-1.5">

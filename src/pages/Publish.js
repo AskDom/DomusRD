@@ -243,15 +243,15 @@ export default function Publish() {
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Operación">
                   <select value={form.status} onChange={(e) => set("status", e.target.value)} className={input}>
-                    <option>Venta</option>
-                    <option>Renta</option>
+                    <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Venta</option>
+                    <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Renta</option>
                   </select>
                 </Field>
                 <Field label="Tipo de propiedad">
                   <select value={form.type} onChange={(e) => set("type", e.target.value)} className={input}>
-                    <option>Apartamento</option>
-                    <option>Casa</option>
-                    <option>Villa</option>
+                    <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Apartamento</option>
+                    <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Casa</option>
+                    <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Villa</option>
                   </select>
                 </Field>
               </div>
@@ -282,7 +282,11 @@ export default function Publish() {
                         onChange={(e) => set(key, Number(e.target.value))}
                         className="w-full text-center text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none cursor-pointer"
                       >
-                        {opts.map((n) => <option key={n} value={n}>{n}</option>)}
+                        {opts.map((n) => (
+                          <option key={n} value={n} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                            {n}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   ))}
