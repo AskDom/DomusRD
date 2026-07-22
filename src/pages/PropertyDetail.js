@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -78,6 +78,19 @@ export default function PropertyDetail() {
   const [msgText, setMsgText] = useState("");
   const [msgSent, setMsgSent] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const galleryRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const bottom = galleryRef.current?.getBoundingClientRect().bottom ?? 0;
+      setShowStickyBar(bottom < 64);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -126,11 +139,32 @@ export default function PropertyDetail() {
     : [property.image, ...(extraImages[property.type] || [])];
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300 pb-16 lg:pb-0">
       <Navbar />
 
+      {/* ── BARRA FLOTANTE — precio + WhatsApp, aparece al pasar la galería ──
+           Mobile: pegada abajo. Desktop (lg+): pegada arriba, bajo el navbar. */}
+      <div
+        className={`fixed bottom-0 lg:bottom-auto lg:top-16 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t lg:border-t-0 lg:border-b border-gray-100 dark:border-gray-700 shadow-lg px-4 md:px-6 py-3 flex items-center gap-3 transition-transform duration-300 ${
+          showStickyBar
+            ? "translate-y-0"
+            : "translate-y-[130%] lg:-translate-y-[130%]"
+        }`}
+      >
+        <p className="font-black text-gray-900 dark:text-white text-lg whitespace-nowrap">
+          ${Number(property.price).toLocaleString()}
+        </p>
+        <p className="hidden sm:block text-sm text-gray-400 truncate flex-1">{property.title}</p>
+        <button
+          onClick={handleWhatsApp}
+          className="ml-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold transition shadow-md flex items-center gap-1.5 whitespace-nowrap"
+        >
+          💬 WhatsApp
+        </button>
+      </div>
+
       {/* ── GALERÍA HERO ── */}
-      <div className="relative h-[55vh] min-h-[400px] max-h-[640px]">
+      <div ref={galleryRef} className="relative h-[55vh] min-h-[400px] max-h-[640px]">
 
         {/* IMAGEN PRINCIPAL con blur de fondo */}
         <div className="absolute inset-0 overflow-hidden">
@@ -278,31 +312,46 @@ export default function PropertyDetail() {
         transition={{ duration: 0.45, ease: "easeOut" }}
         className="max-w-6xl mx-auto px-4 md:px-6 py-8"
       >
+        {/* ── FRANJA DE TÍTULO — vive sobre el fondo, sin card ── */}
+        <div className="mb-7">
+          <div className="flex gap-2 mb-3 flex-wrap items-center">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              property.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
+            }`}>{property.status}</span>
+            <span className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-bold">
+              {property.type}
+            </span>
+            {property.verified && <VerifiedBadge size="lg" />}
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight">
+            {property.title}
+          </h1>
+          <p className="text-gray-400 mt-2 flex items-center gap-1.5 text-sm">
+            📍 {property.city || "República Dominicana"}
+          </p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {[
+              { icon: "🛏️", value: property.rooms, label: "hab" },
+              { icon: "🛁", value: property.baths, label: "baños" },
+              { icon: "🚗", value: property.parking, label: "parq" },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full px-3.5 py-2 transition-colors">
+                <span className="text-sm">{s.icon}</span>
+                <span className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</span>
+                <span className="text-gray-400 text-xs">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* ── COLUMNA IZQUIERDA ── */}
-          <div className="lg:col-span-2 space-y-7">
+          {/* ── COLUMNA IZQUIERDA — hoja continua ── */}
+          <div className="lg:col-span-2">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 transition-colors overflow-hidden">
 
-            {/* TÍTULO */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-              <div className="flex gap-2 mb-3 flex-wrap items-center">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  property.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
-                }`}>{property.status}</span>
-                <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-bold">
-                  {property.type}
-                </span>
-                {property.verified && <VerifiedBadge size="lg" />}
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight">
-                {property.title}
-              </h1>
-              <p className="text-gray-400 mt-2 flex items-center gap-1.5 text-sm">
-                📍 {property.city || "República Dominicana"}
-              </p>
-
-              {/* PRECIO — protagonista de la card */}
-              <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+              {/* PRECIO — protagonista, abre la hoja */}
+              <div className="p-6">
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
                   {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
                 </p>
@@ -310,80 +359,73 @@ export default function PropertyDetail() {
                   ${Number(property.price).toLocaleString()}
                   {property.status === "Renta" && <span className="text-lg font-normal text-gray-400 ml-2">/mes</span>}
                 </p>
-
-                {/* STATS — chips secundarios, ya no compiten con el precio */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {[
-                    { icon: "🛏️", value: property.rooms, label: "hab" },
-                    { icon: "🛁", value: property.baths, label: "baños" },
-                    { icon: "🚗", value: property.parking, label: "parq" },
-                  ].map((s) => (
-                    <div key={s.label} className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 rounded-full px-3.5 py-2 transition-colors">
-                      <span className="text-sm">{s.icon}</span>
-                      <span className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</span>
-                      <span className="text-gray-400 text-xs">{s.label}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </div>
 
-            {/* DESCRIPCIÓN */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-              <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-blue-600 rounded-full" />
-                Descripción
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-8 text-sm">{property.description}</p>
-            </div>
-
-            {/* AMENIDADES */}
-            {property.amenities?.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+              {/* DESCRIPCIÓN */}
+              <div className="p-6">
                 <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <span className="w-1 h-5 bg-blue-600 rounded-full" />
-                  Amenidades
+                  Descripción
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                  {property.amenities.map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl px-4 py-3 transition-colors group"
-                    >
-                      <span className="text-xl group-hover:scale-110 transition-transform">{amenityIcons[item] || "✅"}</span>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{item}</span>
-                    </motion.div>
-                  ))}
-                </div>
+                <p className="text-gray-600 dark:text-gray-400 leading-8 text-sm">{property.description}</p>
               </div>
-            )}
 
-            {/* MAPA */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-              <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-blue-600 rounded-full" />
-                Ubicación
-              </h2>
-              <p className="text-sm text-gray-400 mb-3">📍 {property.city || "República Dominicana"}</p>
-              <MapContainer center={[property.lat, property.lng]} zoom={14} className="h-[280px] rounded-2xl">
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <Marker position={[property.lat, property.lng]}>
-                  <Popup>{property.title}</Popup>
-                </Marker>
-              </MapContainer>
+              {/* AMENIDADES — preview + expandir */}
+              {property.amenities?.length > 0 && (
+                <div className="p-6">
+                  <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <span className="w-1 h-5 bg-blue-600 rounded-full" />
+                    Amenidades
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {(amenitiesExpanded ? property.amenities : property.amenities.slice(0, 6)).map((item, i) => (
+                      <motion.div
+                        key={item}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl px-4 py-3 transition-colors group"
+                      >
+                        <span className="text-xl group-hover:scale-110 transition-transform">{amenityIcons[item] || "✅"}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{item}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                  {property.amenities.length > 6 && (
+                    <button
+                      onClick={() => setAmenitiesExpanded((v) => !v)}
+                      className="mt-4 border border-gray-200 dark:border-gray-600 text-blue-600 dark:text-blue-400 font-bold text-sm px-4 py-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                    >
+                      {amenitiesExpanded ? "Ver menos ↑" : `Ver las ${property.amenities.length} amenidades ↓`}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* MAPA */}
+              <div className="p-6">
+                <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <span className="w-1 h-5 bg-blue-600 rounded-full" />
+                  Ubicación
+                </h2>
+                <p className="text-sm text-gray-400 mb-3">📍 {property.city || "República Dominicana"}</p>
+                <MapContainer center={[property.lat, property.lng]} zoom={14} className="h-[280px] rounded-2xl">
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <Marker position={[property.lat, property.lng]}>
+                    <Popup>{property.title}</Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
+
             </div>
-
           </div>
 
-          {/* ── SIDEBAR ── */}
+          {/* ── SIDEBAR — panel flotante, se monta sobre la hoja ── */}
           <div className="lg:col-span-1">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-20 space-y-4 lg:-mt-8">
 
               {/* CARD CONTACTO */}
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
 
                 {/* HEADER SIDEBAR */}
                 <div className="p-5 text-white" style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}>
