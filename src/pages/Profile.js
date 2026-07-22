@@ -216,14 +216,17 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Operación</label>
               <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className={inputClass}>
-                <option>Venta</option><option>Renta</option>
+                <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Venta</option>
+                <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Renta</option>
               </select>
             </div>
           </div>
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Tipo</label>
             <select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })} className={inputClass}>
-              <option>Apartamento</option><option>Casa</option><option>Villa</option>
+              <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Apartamento</option>
+              <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Casa</option>
+              <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Villa</option>
             </select>
           </div>
           <div>

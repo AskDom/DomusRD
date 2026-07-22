@@ -229,7 +229,7 @@ export default function Admin() {
                           className={`text-xs font-semibold px-2 py-1 rounded-full border-0 cursor-pointer ${ROLE_COLORS[u.role]}`}
                         >
                           {["CLIENTE", "VENDEDOR", "AGENTE", "ADMIN"].map((r) => (
-                            <option key={r} value={r}>{r}</option>
+                            <option key={r} value={r} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">{r}</option>
                           ))}
                         </select>
                       </td>
