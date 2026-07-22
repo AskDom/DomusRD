@@ -4,9 +4,10 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import AuthModal from "../components/AuthModal";
-import PropertyImage from "../components/PropertyImage";
 import VerifiedBadge from "../components/VerifiedBadge";
+import PropertyCard from "../components/PropertyCard";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
@@ -109,7 +110,7 @@ export default function PropertyDetail() {
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center text-center px-4">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col items-center justify-center text-center px-4">
         <p className="text-6xl mb-4">🏚️</p>
         <p className="text-2xl font-black text-gray-900 dark:text-white mb-2">Propiedad no encontrada</p>
         <p className="text-gray-500 dark:text-gray-400 mb-6">Esta propiedad no existe o fue eliminada.</p>
@@ -125,7 +126,7 @@ export default function PropertyDetail() {
     : [property.image, ...(extraImages[property.type] || [])];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
 
       {/* ── GALERÍA HERO ── */}
@@ -134,7 +135,7 @@ export default function PropertyDetail() {
         {/* IMAGEN PRINCIPAL con blur de fondo */}
         <div className="absolute inset-0 overflow-hidden">
           <img src={gallery[0]} alt="bg" className="w-full h-full object-cover scale-110 blur-sm opacity-30 dark:opacity-20" />
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-50/60 via-transparent to-gray-50 dark:from-gray-900/60 dark:to-gray-900" />
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-100/60 via-transparent to-gray-100 dark:from-gray-950/60 dark:to-gray-950" />
         </div>
 
         {/* CARRUSEL MOBILE */}
@@ -283,7 +284,7 @@ export default function PropertyDetail() {
           <div className="lg:col-span-2 space-y-7">
 
             {/* TÍTULO */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
               <div className="flex gap-2 mb-3 flex-wrap items-center">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                   property.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
@@ -328,7 +329,7 @@ export default function PropertyDetail() {
             </div>
 
             {/* DESCRIPCIÓN */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
               <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <span className="w-1 h-5 bg-blue-600 rounded-full" />
                 Descripción
@@ -338,7 +339,7 @@ export default function PropertyDetail() {
 
             {/* AMENIDADES */}
             {property.amenities?.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
                 <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <span className="w-1 h-5 bg-blue-600 rounded-full" />
                   Amenidades
@@ -361,7 +362,7 @@ export default function PropertyDetail() {
             )}
 
             {/* MAPA */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
               <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <span className="w-1 h-5 bg-blue-600 rounded-full" />
                 Ubicación
@@ -382,10 +383,10 @@ export default function PropertyDetail() {
             <div className="sticky top-20 space-y-4">
 
               {/* CARD CONTACTO */}
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
 
                 {/* HEADER SIDEBAR */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-5 text-white">
+                <div className="p-5 text-white" style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}>
                   <p className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">
                     {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
                   </p>
@@ -428,13 +429,16 @@ export default function PropertyDetail() {
                           placeholder="Hola, estoy interesado en esta propiedad..."
                           className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 placeholder-gray-400 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none h-24 transition-colors"
                         />
-                        <button
+                        <motion.button
+                          whileHover={{ scale: msgText.trim() ? 1.02 : 1 }}
+                          whileTap={{ scale: msgText.trim() ? 0.98 : 1 }}
                           onClick={handleSendMessage}
                           disabled={!msgText.trim()}
-                          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-2xl font-bold transition shadow-md"
+                          className="w-full text-white py-3 rounded-2xl font-bold transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                          style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}
                         >
                           ✉️ Enviar mensaje
-                        </button>
+                        </motion.button>
                       </div>
                     )
                   ) : (
@@ -479,51 +483,16 @@ export default function PropertyDetail() {
               <span className="w-1 h-5 bg-blue-600 rounded-full" />
               Propiedades similares
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {similar.map((prop, i) => (
-                <motion.div
+                <PropertyCard
                   key={prop.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.07 }}
-                >
-                  <Link to={`/property/${prop.id}`} onClick={() => window.scrollTo(0, 0)}>
-                    <div className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-                      <div className="relative overflow-hidden">
-                        <PropertyImage
-                          src={prop.image}
-                          type={prop.type}
-                          alt={prop.title}
-                          className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <span className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          prop.status === "Venta" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
-                        }`}>
-                          {prop.status}
-                        </span>
-                        <button
-                          onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
-                          className="absolute top-2 right-2 bg-white dark:bg-gray-800 w-7 h-7 rounded-full flex items-center justify-center shadow text-xs hover:scale-110 transition-transform"
-                        >
-                          {isFavorite(prop.id) ? "❤️" : "🤍"}
-                        </button>
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-xs leading-snug line-clamp-2">{prop.title}</h3>
-                        <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "Rep. Dominicana"}</p>
-                        <p className="text-blue-600 dark:text-blue-400 font-black text-sm mt-1.5">
-                          ${Number(prop.price).toLocaleString()}
-                          {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
-                        </p>
-                        <div className="flex gap-2 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700 text-gray-400 text-xs">
-                          <span>🛏️ {prop.rooms}</span>
-                          <span>🛁 {prop.baths}</span>
-                          <span>🚗 {prop.parking}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                  prop={prop}
+                  index={i}
+                  toggleFavorite={toggleFavorite}
+                  isFavorite={isFavorite}
+                  toast={toast}
+                />
               ))}
             </div>
           </div>
@@ -535,6 +504,7 @@ export default function PropertyDetail() {
           <ReviewSection propertyId={property.id} publishedById={publishedById} />
         </div>
       )}
+      <Footer />
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
