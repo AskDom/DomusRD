@@ -11,6 +11,7 @@ import Publish from "./pages/Publish";
 import PropertyDetail from "./pages/PropertyDetail";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
+import AgentProfile from "./pages/AgentProfile";
 import Favorites from "./pages/Favorites";
 import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,7 @@ function AnimatedRoutes() {
         <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
         <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/agent/:id" element={<PageTransition><AgentProfile /></PageTransition>} />
         <Route path="/favorites" element={<PageTransition><Favorites /></PageTransition>} />
         <Route path="/inbox" element={<PageTransition><Inbox /></PageTransition>} />
         <Route path="/publish" element={

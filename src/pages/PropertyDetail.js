@@ -246,13 +246,6 @@ export default function PropertyDetail() {
         </div>
 
         {/* BOTONES FLOTANTES */}
-        <div className="absolute top-6 left-6 z-10 flex gap-2">
-          <Link to="/">
-            <button className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-semibold shadow-lg hover:bg-white dark:hover:bg-gray-800 transition">
-              ← Volver
-            </button>
-          </Link>
-        </div>
         <div className="absolute top-6 right-6 z-10 flex gap-2">
           <button
             onClick={handleShare}
@@ -446,7 +439,10 @@ export default function PropertyDetail() {
 
                   {/* AGENTE */}
                   {publishedByName && (
-                    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-2xl p-3 transition-colors">
+                    <Link
+                      to={`/agent/${publishedById}`}
+                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-2xl p-3 transition-colors"
+                    >
                       {publishedByAvatar ? (
                         <img src={publishedByAvatar} alt={publishedByName} className="w-10 h-10 rounded-xl object-cover shadow-md shrink-0" />
                       ) : (
@@ -458,7 +454,7 @@ export default function PropertyDetail() {
                         <p className="text-xs text-gray-400">Publicado por</p>
                         <p className="font-bold text-gray-900 dark:text-white text-sm">{publishedByName}</p>
                       </div>
-                    </div>
+                    </Link>
                   )}
 
                   {/* MENSAJE */}
