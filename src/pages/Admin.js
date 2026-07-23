@@ -11,6 +11,16 @@ const ROLE_COLORS = {
   CLIENTE:  "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
 };
 
+// El backend devuelve `tuRol` en los 403 de requireRole — lo usamos para
+// dar una pista útil en vez de solo "acceso denegado" (ej. token viejo
+// tras cambiar de rol manualmente, antes de volver a iniciar sesión).
+function formatAdminError(data, status, what) {
+  if (status === 403 && data.tuRol) {
+    return `${data.error} Tu sesión actual todavía dice "${data.tuRol}" — si acabas de cambiar tu rol, cierra sesión y vuelve a entrar para refrescar el token.`;
+  }
+  return data.error || `No se pudieron cargar ${what} (${status}).`;
+}
+
 function StatCard({ label, value, sub, color = "blue" }) {
   const colors = {
     blue:   "from-blue-500 to-blue-600",
@@ -38,6 +48,7 @@ export default function Admin() {
   const [properties, setProperties] = useState([]);
   const [search,     setSearch]     = useState("");
   const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState("");
 
   // Redirigir si no es ADMIN
   useEffect(() => {
@@ -55,7 +66,10 @@ export default function Admin() {
     try {
       const res  = await fetch(`${API_URL}/api/admin/stats`, { headers: authHeaders() });
       const data = await res.json();
-      if (res.ok) setStats(data);
+      if (res.ok) { setStats(data); setError(""); }
+      else setError(formatAdminError(data, res.status, "las estadísticas"));
+    } catch {
+      setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
   }, [authHeaders]);
 
@@ -64,7 +78,10 @@ export default function Admin() {
     try {
       const res  = await fetch(`${API_URL}/api/admin/users?search=${encodeURIComponent(search)}&limit=50`, { headers: authHeaders() });
       const data = await res.json();
-      if (res.ok) setUsers(data.users);
+      if (res.ok) { setUsers(data.users); setError(""); }
+      else setError(formatAdminError(data, res.status, "los usuarios"));
+    } catch {
+      setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
   }, [authHeaders, search]);
 
@@ -73,7 +90,10 @@ export default function Admin() {
     try {
       const res  = await fetch(`${API_URL}/api/admin/properties?search=${encodeURIComponent(search)}&limit=50`, { headers: authHeaders() });
       const data = await res.json();
-      if (res.ok) setProperties(data.properties);
+      if (res.ok) { setProperties(data.properties); setError(""); }
+      else setError(formatAdminError(data, res.status, "las propiedades"));
+    } catch {
+      setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
   }, [authHeaders, search]);
 
@@ -152,6 +172,21 @@ export default function Admin() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
+
+        {/* ── ERROR ── */}
+        {error && (
+          <div className="mb-6 flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl px-4 py-3">
+            <span className="text-lg shrink-0">⚠️</span>
+            <p className="text-sm text-red-700 dark:text-red-300 flex-1">{error}</p>
+            <button
+              onClick={() => setError("")}
+              className="text-red-400 hover:text-red-600 dark:hover:text-red-200 text-lg leading-none"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {/* ── STATS ── */}
         {tab === "stats" && stats && (
