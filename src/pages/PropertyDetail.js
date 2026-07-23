@@ -446,7 +446,10 @@ export default function PropertyDetail() {
 
                   {/* AGENTE */}
                   {publishedByName && (
-                    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-2xl p-3 transition-colors">
+                    <Link
+                      to={`/agent/${publishedById}`}
+                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-2xl p-3 transition-colors"
+                    >
                       {publishedByAvatar ? (
                         <img src={publishedByAvatar} alt={publishedByName} className="w-10 h-10 rounded-xl object-cover shadow-md shrink-0" />
                       ) : (
@@ -458,7 +461,7 @@ export default function PropertyDetail() {
                         <p className="text-xs text-gray-400">Publicado por</p>
                         <p className="font-bold text-gray-900 dark:text-white text-sm">{publishedByName}</p>
                       </div>
-                    </div>
+                    </Link>
                   )}
 
                   {/* MENSAJE */}
