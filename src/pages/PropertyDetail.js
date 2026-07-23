@@ -246,13 +246,6 @@ export default function PropertyDetail() {
         </div>
 
         {/* BOTONES FLOTANTES */}
-        <div className="absolute top-6 left-6 z-10 flex gap-2">
-          <Link to="/">
-            <button className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-semibold shadow-lg hover:bg-white dark:hover:bg-gray-800 transition">
-              ← Volver
-            </button>
-          </Link>
-        </div>
         <div className="absolute top-6 right-6 z-10 flex gap-2">
           <button
             onClick={handleShare}
