@@ -107,11 +107,36 @@ export function AuthProvider({ children }) {
 
   const getToken = useCallback(() => localStorage.getItem("domusrd-token"), []);
 
+  const updateAvatar = useCallback(async (file) => {
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const res  = await fetch(`${API_URL}/api/auth/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Error al actualizar la foto de perfil.");
+        return false;
+      }
+      const user = normalizeUser(data.user);
+      localStorage.setItem("domusrd-session", JSON.stringify(user));
+      setCurrentUser(user);
+      return user;
+    } catch {
+      setError("No se pudo conectar con el servidor.");
+      return false;
+    }
+  }, [getToken]);
+
   // ← Ya NO bloqueamos el render — la app carga inmediatamente
   // El rol se actualiza en segundo plano cuando /api/auth/me responde
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, getToken }}>
+    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, getToken, updateAvatar }}>
       {children}
     </AuthContext.Provider>
   );

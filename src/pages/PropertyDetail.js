@@ -68,6 +68,10 @@ export default function PropertyDetail() {
         : property.publishedById || "admin")
     : "admin";
 
+  const publishedByAvatar = property && typeof property.publishedBy === "object" && property.publishedBy !== null
+    ? property.publishedBy.avatar
+    : null;
+
   const similar = allProperties
     .filter((p) => p.id !== property.id && (p.type === property.type || p.city === property.city))
     .slice(0, 4);
@@ -443,9 +447,13 @@ export default function PropertyDetail() {
                   {/* AGENTE */}
                   {publishedByName && (
                     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-2xl p-3 transition-colors">
-                      <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-md shrink-0">
-                        {publishedByName.charAt(0).toUpperCase()}
-                      </div>
+                      {publishedByAvatar ? (
+                        <img src={publishedByAvatar} alt={publishedByName} className="w-10 h-10 rounded-xl object-cover shadow-md shrink-0" />
+                      ) : (
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-md shrink-0">
+                          {publishedByName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <p className="text-xs text-gray-400">Publicado por</p>
                         <p className="font-bold text-gray-900 dark:text-white text-sm">{publishedByName}</p>

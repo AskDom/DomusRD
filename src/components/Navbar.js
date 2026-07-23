@@ -122,6 +122,20 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* PANEL ADMIN — visible directo, fuera del menú desplegable */}
+          {currentUser?.role === "Admin" && (
+            <Link
+              to="/admin"
+              className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                location.pathname === "/admin"
+                  ? "bg-purple-600 text-white shadow-md"
+                  : "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50"
+              }`}
+            >
+              🛡️ Admin
+            </Link>
+          )}
+
           {/* USER / SIGN IN */}
           {currentUser ? (
             <div className="relative">
@@ -129,9 +143,13 @@ export default function Navbar() {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
-                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
-                  {currentUser.name.charAt(0).toUpperCase()}
-                </div>
+                {currentUser.avatar ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="hidden md:block text-left leading-none">
                   <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name.split(" ")[0]}</p>
                   <p className={`text-[10px] font-semibold ${
@@ -155,7 +173,6 @@ export default function Navbar() {
                   </div>
                   {[
                     { to: "/profile", label: "Mi perfil", icon: "👤" },
-                    ...(currentUser.role === "Admin" ? [{ to: "/admin", label: "Panel admin", icon: "🛡️" }] : []),
                     { to: "/profile?tab=propiedades", label: "Mis propiedades", icon: "🏠" },
                     { to: "/favorites", label: "Favoritos", icon: "❤️" },
                     { to: "/inbox", label: "Inbox", icon: "✉️", badge: unread },
@@ -218,6 +235,11 @@ export default function Navbar() {
                 <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                   👤 Mi perfil
                 </Link>
+                {currentUser.role === "Admin" && (
+                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-purple-600 dark:text-purple-300 px-3 py-2.5 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
+                    🛡️ Panel admin
+                  </Link>
+                )}
                 <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left text-sm font-medium text-red-500 px-3 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                   🚪 Cerrar sesión
                 </button>
