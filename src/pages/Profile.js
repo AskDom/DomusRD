@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -274,7 +274,7 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
-  const { currentUser, logout, updateAvatar } = useAuth();
+  const { currentUser, logout, updateAvatar, getToken } = useAuth();
   const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty, verifyProperty } = useProperties();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -284,6 +284,45 @@ export default function Profile() {
   const [confirmDelete,  setConfirmDelete]  = useState(null);
   const [uploadingEdit,  setUploadingEdit]  = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [savedSearches,  setSavedSearches]  = useState([]);
+  const [loadingSaved,   setLoadingSaved]   = useState(false);
+
+  const fetchSavedSearches = useCallback(async () => {
+    setLoadingSaved(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/saved-searches`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await res.json();
+      if (res.ok) setSavedSearches(data.searches);
+    } finally {
+      setLoadingSaved(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => { fetchSavedSearches(); }, [fetchSavedSearches]);
+
+  const deleteSavedSearch = async (id) => {
+    const res = await fetch(`${API_URL}/api/saved-searches/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (res.ok) {
+      setSavedSearches((prev) => prev.filter((s) => s.id !== id));
+      toast({ message: "Búsqueda eliminada", type: "info" });
+    }
+  };
+
+  const savedSearchUrl = (filters) => {
+    const params = new URLSearchParams();
+    if (filters.search)   params.set("q", filters.search);
+    if (filters.status)   params.set("status", filters.status);
+    if (filters.type)     params.set("type", filters.type);
+    if (filters.rooms)    params.set("rooms", filters.rooms);
+    if (filters.minPrice) params.set("minPrice", filters.minPrice);
+    if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+    return `/search?${params.toString()}`;
+  };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -376,6 +415,7 @@ export default function Profile() {
   const tabs = [
     { key: "propiedades", label: "Propiedades", count: myProperties.length },
     { key: "favoritos",   label: "Favoritos",   count: favoriteProperties.length },
+    { key: "guardadas",   label: "Búsquedas",   count: savedSearches.length },
     { key: "cuenta",      label: "Mi cuenta" },
   ];
 
@@ -536,6 +576,47 @@ export default function Profile() {
                         </div>
                       </div>
                     </Link>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── BÚSQUEDAS GUARDADAS ── */}
+          {activeTab === "guardadas" && (
+            <motion.div key="saved" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              {loadingSaved ? (
+                <div className="text-center py-16 text-gray-400">Cargando...</div>
+              ) : savedSearches.length === 0 ? (
+                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-5xl mb-3">💾</p>
+                  <p className="text-gray-600 dark:text-gray-400 font-semibold mb-4">No tienes búsquedas guardadas</p>
+                  <Link to="/search" className="text-sm font-bold text-blue-600 hover:underline">Buscar propiedades →</Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {savedSearches.map((s) => (
+                    <div key={s.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{s.name}</p>
+                        <p className="text-gray-400 text-xs mt-1 truncate">
+                          {Object.entries(s.filters).map(([k, v]) => `${k}: ${v}`).join(" · ") || "Sin filtros"}
+                        </p>
+                      </div>
+                      <Link
+                        to={savedSearchUrl(s.filters)}
+                        className="text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-2 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition whitespace-nowrap"
+                      >
+                        Ver resultados →
+                      </Link>
+                      <button
+                        onClick={() => deleteSavedSearch(s.id)}
+                        className="text-gray-300 hover:text-red-500 transition text-lg"
+                        title="Eliminar"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

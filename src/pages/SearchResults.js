@@ -10,6 +10,8 @@ import PropertyImage from "../components/PropertyImage";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useProperties } from "../context/PropertiesContext";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -64,12 +66,55 @@ export default function SearchResults() {
   const [total,      setTotal]      = useState(0);
   const [mapVersion, setMapVersion] = useState(0);
   const [filters,    setFilters]    = useState({
-    status: "", type: "", rooms: "", minPrice: "", maxPrice: "",
+    status:   searchParams.get("status")   || "",
+    type:     searchParams.get("type")     || "",
+    rooms:    searchParams.get("rooms")    || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
   });
 
+  // Re-sincroniza los filtros si cambia la URL (ej. al abrir una búsqueda
+  // guardada desde otra página mientras ya estás en /search)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setFilters({
+      status:   searchParams.get("status")   || "",
+      type:     searchParams.get("type")     || "",
+      rooms:    searchParams.get("rooms")    || "",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+    });
+  }, [searchParams]);
+
   const { toggleFavorite, isFavorite } = useProperties();
+  const { currentUser, getToken } = useAuth();
+  const { toast } = useToast();
+  const [savingSearch, setSavingSearch] = useState(false);
   const query      = searchParams.get("q") || "";
   const debounceRef = useRef(null);
+
+  const handleSaveSearch = async () => {
+    const name = window.prompt(
+      "¿Cómo quieres llamar a esta búsqueda?",
+      query ? `Búsqueda: ${query}` : "Mi búsqueda"
+    );
+    if (!name?.trim()) return;
+    setSavingSearch(true);
+    try {
+      const res = await fetch(`${API_URL}/api/saved-searches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ name: name.trim(), filters: { ...filters, search: query } }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al guardar la búsqueda.");
+      toast({ message: "Búsqueda guardada ✅", type: "success" });
+    } catch (err) {
+      toast({ message: err.message, type: "error" });
+    } finally {
+      setSavingSearch(false);
+    }
+  };
 
   // ── FETCH AL BACKEND ───────────────────────────────────────────────────────
   const fetchResults = useCallback(async (q, f) => {
@@ -125,7 +170,12 @@ export default function SearchResults() {
           <input
             type="text"
             defaultValue={query}
-            onKeyDown={(e) => { if (e.key === "Enter") setSearchParams({ q: e.target.value }); }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              const next = new URLSearchParams(searchParams);
+              next.set("q", e.target.value);
+              setSearchParams(next);
+            }}
             placeholder="Buscar ciudad, sector..."
             className="bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 w-full"
           />
@@ -168,6 +218,16 @@ export default function SearchResults() {
         {hasFilters && (
           <button onClick={resetFilters} className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap transition">
             ✕ Limpiar
+          </button>
+        )}
+
+        {currentUser && (query || hasFilters) && (
+          <button
+            onClick={handleSaveSearch}
+            disabled={savingSearch}
+            className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded-lg whitespace-nowrap transition disabled:opacity-50"
+          >
+            💾 {savingSearch ? "Guardando..." : "Guardar búsqueda"}
           </button>
         )}
 
