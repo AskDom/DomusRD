@@ -13,3 +13,10 @@
 .leaflet-popup {
   z-index: 500 !important;
 }
+
+/* Aislar el stacking context del mapa: sin esto, los z-index internos de
+   Leaflet (hasta 500) se comparan contra el resto de la página y terminan
+   pasando por encima del navbar (z-50) al hacer scroll. */
+.leaflet-container {
+  isolation: isolate;
+}
