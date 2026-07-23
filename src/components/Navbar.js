@@ -5,6 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useInbox } from "../context/InboxContext";
+import { useNotifications } from "../context/NotificationsContext";
 
 // SVG Icons
 const SunIcon = () => (
@@ -47,15 +48,24 @@ const CloseIcon = () => (
   </svg>
 );
 
+const BellIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+
 export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
   const { dark, toggleDark } = useTheme();
   const { currentUser, logout } = useAuth();
     const { favorites } = useProperties();
   const { getUnreadCount } = useInbox();
+  const { notifications, unreadCount: unreadNotifs, markAsRead, markAllAsRead } = useNotifications();
   const unread = currentUser ? getUnreadCount(currentUser.id) : 0;
 
   const iconBtn = "relative flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200";
@@ -92,6 +102,55 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
+            )}
+
+            {/* NOTIFICACIONES */}
+            {currentUser && (
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen((v) => !v)}
+                  className={iconBtn}
+                >
+                  <BellIcon />
+                  {unreadNotifs > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                      {unreadNotifs}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                      <p className="text-sm font-black text-gray-900 dark:text-white">Notificaciones</p>
+                      {unreadNotifs > 0 && (
+                        <button onClick={markAllAsRead} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                          Marcar todas leídas
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="text-center text-gray-400 text-sm py-8">No tienes notificaciones</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <Link
+                            key={n.id}
+                            to={n.propertyId ? `/property/${n.propertyId}` : "#"}
+                            onClick={() => { markAsRead(n.id); setNotifOpen(false); }}
+                            className={`block px-4 py-3 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition ${
+                              n.read ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white font-semibold"
+                            }`}
+                          >
+                            {!n.read && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 mr-2 align-middle" />}
+                            {n.message}
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* FAVORITOS */}
