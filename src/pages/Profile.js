@@ -274,7 +274,7 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, updateAvatar } = useAuth();
   const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty, verifyProperty } = useProperties();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -283,6 +283,21 @@ export default function Profile() {
   const [editForm,       setEditForm]       = useState({});
   const [confirmDelete,  setConfirmDelete]  = useState(null);
   const [uploadingEdit,  setUploadingEdit]  = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const result = await updateAvatar(file);
+      if (result) toast({ message: "Foto de perfil actualizada ✅", type: "success" });
+      else toast({ message: "No se pudo actualizar la foto de perfil.", type: "error" });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   if (!currentUser) {
     return (
@@ -371,20 +386,34 @@ export default function Profile() {
       {/* ── COVER / HEADER ── */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-          <div className="px-6 py-5 flex items-center gap-4">
+          <div className="px-6 py-6 flex items-center gap-5">
             {/* Avatar */}
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${roleConfig.bg} flex items-center justify-center text-white text-2xl font-black shadow-md flex-shrink-0`}>
-              {currentUser.name.charAt(0).toUpperCase()}
-            </div>
+            <label className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex-shrink-0 cursor-pointer group">
+              {currentUser.avatar ? (
+                <img src={currentUser.avatar} alt={currentUser.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-md" />
+              ) : (
+                <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br ${roleConfig.bg} flex items-center justify-center text-white text-4xl font-black shadow-md`}>
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-3xl bg-black/0 group-hover:bg-black/50 flex items-center justify-center transition-colors">
+                {uploadingAvatar ? (
+                  <span className="text-white text-xs animate-pulse">...</span>
+                ) : (
+                  <span className="text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity">📷</span>
+                )}
+              </div>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} disabled={uploadingAvatar} />
+            </label>
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-black text-gray-900 dark:text-white">{currentUser.name}</h1>
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white">{currentUser.name}</h1>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r ${roleConfig.bg}`}>
                   {roleConfig.label}
                 </span>
               </div>
-              <p className="text-gray-400 text-sm mt-0.5">{currentUser.email}</p>
+              <p className="text-gray-400 text-sm mt-1">{currentUser.email}</p>
             </div>
             {/* Cerrar sesión */}
             <button
