@@ -165,29 +165,32 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           HERO
       ════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden" style={{ height: 520 }}>
-        {/* Fondo con crossfade */}
-        <AnimatePresence mode="sync">
-          <motion.img
-            key={slide.url}
-            src={slide.url}
-            alt="hero"
-            initial={{ opacity: 0, scale: 1.06 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center 60%" }}
-          />
-        </AnimatePresence>
+      <div className="relative" style={{ height: 520 }}>
+        {/* Fondo con crossfade — el overflow-hidden queda solo acá, para que
+            el dropdown de búsquedas recientes (más abajo) no se corte */}
+        <div className="absolute inset-0 overflow-hidden">
+          <AnimatePresence mode="sync">
+            <motion.img
+              key={slide.url}
+              src={slide.url}
+              alt="hero"
+              initial={{ opacity: 0, scale: 1.06 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2 }}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: "center 60%" }}
+            />
+          </AnimatePresence>
 
-        {/* Gradientes */}
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.85) 100%)"
-        }}/>
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 60%)"
-        }}/>
+          {/* Gradientes */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.85) 100%)"
+          }}/>
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 60%)"
+          }}/>
+        </div>
 
         {/* Contenido */}
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
