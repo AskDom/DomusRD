@@ -43,7 +43,10 @@ function MapFocus({ properties, version }) {
       map.setView([properties[0].lat, properties[0].lng], 13, { animate: true });
     } else if (properties.length > 1) {
       const bounds = L.latLngBounds(properties.map((p) => [p.lat, p.lng]));
-      map.fitBounds(bounds, { padding: [60, 60], animate: true });
+      // maxZoom evita que, con propiedades muy agrupadas, el encuadre quede
+      // tan cerrado que tape las que están un poco más lejos pero siguen
+      // siendo parte del resultado.
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12, animate: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
