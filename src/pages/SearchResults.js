@@ -35,6 +35,10 @@ function createPriceIcon(price, isActive, status) {
 function MapFocus({ properties, version }) {
   const map = useMap();
   useEffect(() => {
+    // El mapa vive en un panel flex; si su tamaño aún no se asentó cuando
+    // llega este fitBounds/setView, Leaflet calcula el zoom con un ancho
+    // viejo (chico) y encuadra de más. invalidateSize() lo remide primero.
+    map.invalidateSize();
     if (properties.length === 1) {
       map.setView([properties[0].lat, properties[0].lng], 13, { animate: true });
     } else if (properties.length > 1) {
