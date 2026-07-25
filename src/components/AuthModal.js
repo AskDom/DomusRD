@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -39,6 +40,12 @@ export default function AuthModal({ isOpen, onClose }) {
   const [showPass, setShowPass] = useState(false);
   const { login, register, error, setError, loading } = useAuth();
   const { banner } = useToast();
+  const navigate = useNavigate();
+
+  const goToForgotPassword = () => {
+    onClose();
+    navigate("/forgot-password");
+  };
 
   if (!isOpen) return null;
 
@@ -274,6 +281,15 @@ export default function AuthModal({ isOpen, onClose }) {
                           {showPass ? "🙈" : "👁️"}
                         </button>
                       </div>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={goToForgotPassword}
+                          className="mt-1.5 text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                        >
+                          ¿Olvidaste tu contraseña?
+                        </button>
+                      )}
                     </div>
 
                     {/* Selector de rol */}

@@ -17,6 +17,8 @@ import Favorites from "./pages/Favorites";
 import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/PageTransition";
 
@@ -40,6 +42,8 @@ function AnimatedRoutes() {
           </PageTransition>
         } />
         <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
