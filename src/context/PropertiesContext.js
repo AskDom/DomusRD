@@ -44,7 +44,10 @@ export function PropertiesProvider({ children }) {
       if (filters.page)     params.set("page",     filters.page);
       params.set("limit", filters.limit || 12);
 
-      const res  = await fetch(`${API_URL}/api/properties?${params}`);
+      const token = getToken();
+      const res  = await fetch(`${API_URL}/api/properties?${params}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cargar propiedades");
 
@@ -71,7 +74,7 @@ export function PropertiesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getToken]);
 
   useEffect(() => { fetchProperties(); }, [fetchProperties]);
 
