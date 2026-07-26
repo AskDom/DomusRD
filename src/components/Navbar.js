@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useInbox } from "../context/InboxContext";
 import { useNotifications } from "../context/NotificationsContext";
+import { useToast } from "../context/ToastContext";
 
 // SVG Icons
 const SunIcon = () => (
@@ -62,11 +63,20 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
   const { dark, toggleDark } = useTheme();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, resendVerificationEmail } = useAuth();
     const { favorites } = useProperties();
   const { getUnreadCount } = useInbox();
   const { notifications, unreadCount: unreadNotifs, markAsRead, markAllAsRead } = useNotifications();
+  const { toast } = useToast();
   const unread = currentUser ? getUnreadCount(currentUser.id) : 0;
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    const result = await resendVerificationEmail();
+    toast({ message: result.message, type: result.ok ? "success" : "error" });
+    setResending(false);
+  };
 
   const iconBtn = "relative flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200";
 
@@ -276,6 +286,22 @@ export default function Navbar() {
             {menuOpen ? <CloseIcon /> : <MenuIcon />}
           </button>
         </div>
+
+        {/* AVISO DE CORREO SIN VERIFICAR */}
+        {currentUser && !currentUser.emailVerified && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800 px-5 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-center">
+            <span className="text-amber-800 dark:text-amber-300 font-medium">
+              ⚠️ Verifica tu correo para poder publicar propiedades.
+            </span>
+            <button
+              onClick={handleResendVerification}
+              disabled={resending}
+              className="text-amber-900 dark:text-amber-200 font-bold underline hover:no-underline disabled:opacity-60"
+            >
+              {resending ? "Enviando..." : "Reenviar correo"}
+            </button>
+          </div>
+        )}
 
         {/* MOBILE MENU */}
         {menuOpen && (

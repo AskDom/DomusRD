@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Terminos from "./pages/Terminos";
 import Privacidad from "./pages/Privacidad";
 import Cookies from "./pages/Cookies";
@@ -47,6 +48,7 @@ function AnimatedRoutes() {
         <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
         <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path="/verify-email" element={<PageTransition><VerifyEmail /></PageTransition>} />
         <Route path="/terminos" element={<PageTransition><Terminos /></PageTransition>} />
         <Route path="/privacidad" element={<PageTransition><Privacidad /></PageTransition>} />
         <Route path="/cookies" element={<PageTransition><Cookies /></PageTransition>} />

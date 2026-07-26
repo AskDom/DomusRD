@@ -38,11 +38,20 @@ const input = "w-full bg-white dark:bg-gray-800 border border-gray-200 dark:bord
 
 export default function Publish() {
   const { addProperty, published } = useProperties();
-  const { currentUser } = useAuth();
+  const { currentUser, resendVerificationEmail } = useAuth();
   const { toast, banner } = useToast();
   const navigate = useNavigate();
 
-  const isVendedor  = currentUser?.role === "Vendedor";
+  const [resending, setResending] = useState(false);
+  const handleResendVerification = async () => {
+    setResending(true);
+    const result = await resendVerificationEmail();
+    toast({ message: result.message, type: result.ok ? "success" : "error" });
+    setResending(false);
+  };
+
+  const isVendedor    = currentUser?.role === "Vendedor";
+  const needsVerification = currentUser && !currentUser.emailVerified;
   const myPublished = published.filter((p) => {
     const ownerId = typeof p.publishedBy === "object" && p.publishedBy !== null
       ? p.publishedBy.id : p.publishedById;
@@ -106,7 +115,7 @@ export default function Publish() {
     if (!form.description.trim()) errs.description = "Requerida";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    if (hasReachedLimit) return;
+    if (hasReachedLimit || needsVerification) return;
 
     setSubmitting(true);
     try {
@@ -144,6 +153,28 @@ export default function Publish() {
             Completa la información para publicar tu propiedad en DomusRD
           </p>
         </div>
+
+        {/* Correo sin verificar */}
+        {needsVerification && (
+          <div className="mb-8 border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 rounded-2xl px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                Verifica tu correo antes de publicar
+              </p>
+              <p className="text-amber-600/80 dark:text-amber-400/70 text-xs mt-1">
+                Te enviamos un enlace a tu correo cuando te registraste. Revisa tu bandeja de entrada.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending}
+              className="text-xs font-bold text-amber-900 dark:text-amber-200 underline hover:no-underline disabled:opacity-60 shrink-0"
+            >
+              {resending ? "Enviando..." : "Reenviar correo"}
+            </button>
+          </div>
+        )}
 
         {/* Límite vendedor */}
         {hasReachedLimit && (
@@ -373,12 +404,12 @@ export default function Publish() {
           <div className="pt-2 pb-6">
             <motion.button
               type="submit"
-              disabled={hasReachedLimit || submitting}
+              disabled={hasReachedLimit || needsVerification || submitting}
               whileHover={{ scale: submitting ? 1 : 1.01 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-4 rounded-2xl font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
-                background: submitting || hasReachedLimit
+                background: submitting || hasReachedLimit || needsVerification
                   ? "#9ca3af"
                   : "#111827",
                 color: "white",
