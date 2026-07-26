@@ -17,6 +17,9 @@ import Favorites from "./pages/Favorites";
 import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Terminos from "./pages/Terminos";
+import Privacidad from "./pages/Privacidad";
+import Cookies from "./pages/Cookies";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/PageTransition";
 
@@ -40,6 +43,9 @@ function AnimatedRoutes() {
           </PageTransition>
         } />
         <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
+        <Route path="/terminos" element={<PageTransition><Terminos /></PageTransition>} />
+        <Route path="/privacidad" element={<PageTransition><Privacidad /></PageTransition>} />
+        <Route path="/cookies" element={<PageTransition><Cookies /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
