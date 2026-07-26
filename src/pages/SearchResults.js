@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
@@ -30,6 +30,29 @@ function createPriceIcon(price, isActive, status) {
     html: `<div style="background:${bg};color:white;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white;transform:${isActive ? "scale(1.15)" : "scale(1)"};transition:all 0.2s;cursor:pointer">${formatted}</div><div style="width:8px;height:8px;background:${bg};margin:0 auto;clip-path:polygon(0 0,100% 0,50% 100%);margin-top:-1px"></div>`,
     iconSize: [70, 36], iconAnchor: [35, 36], popupAnchor: [0, -36],
   });
+}
+
+// Sin sesión no mostramos el pin exacto (evita usar el mapa de resultados
+// como atajo para sacar la ubicación precisa que se bloquea en el detalle
+// de la propiedad) — redondeamos a una cuadrícula de ~1km y dibujamos una
+// zona en vez de un punto.
+function approxZoneCenter(lat, lng) {
+  const round = (n) => Math.round(n * 100) / 100;
+  return [round(lat), round(lng)];
+}
+
+function PropertyPopupContent({ prop }) {
+  return (
+    <div className="text-sm min-w-[160px]">
+      <PropertyImage src={prop.image} type={prop.type} alt={prop.title} className="w-full h-24 object-cover rounded-lg mb-2"/>
+      <p className="font-bold text-gray-900 leading-snug">{prop.title}</p>
+      <p className="text-blue-600 font-black mt-1">${Number(prop.price).toLocaleString()}</p>
+      <p className="text-gray-500 text-xs mt-0.5">{prop.status} · {prop.type}</p>
+      <Link to={`/property/${prop.id}`} className="block mt-2 bg-blue-600 text-white text-center py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
+        Ver detalles →
+      </Link>
+    </div>
+  );
 }
 
 function MapFocus({ properties, version }) {
@@ -129,7 +152,10 @@ export default function SearchResults() {
       if (f.maxPrice) params.set("maxPrice", f.maxPrice);
       params.set("limit", 50);
 
-      const res  = await fetch(`${API_URL}/api/properties?${params}`);
+      const token = getToken();
+      const res  = await fetch(`${API_URL}/api/properties?${params}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
@@ -143,7 +169,7 @@ export default function SearchResults() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getToken]);
 
   // Debounce: espera 400ms después del último cambio antes de hacer fetch
   useEffect(() => {
@@ -329,22 +355,33 @@ export default function SearchResults() {
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
             <MapFocus properties={results} version={mapVersion}/>
             {results.map((prop) => (
-              <Marker key={prop.id} position={[prop.lat, prop.lng]}
-                icon={createPriceIcon(prop.price, activeId === prop.id, prop.status)}
-                eventHandlers={{ mouseover: () => setActiveId(prop.id), mouseout: () => setActiveId(null) }}
-              >
-                <Popup>
-                  <div className="text-sm min-w-[160px]">
-                    <PropertyImage src={prop.image} type={prop.type} alt={prop.title} className="w-full h-24 object-cover rounded-lg mb-2"/>
-                    <p className="font-bold text-gray-900 leading-snug">{prop.title}</p>
-                    <p className="text-blue-600 font-black mt-1">${Number(prop.price).toLocaleString()}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">{prop.status} · {prop.type}</p>
-                    <Link to={`/property/${prop.id}`} className="block mt-2 bg-blue-600 text-white text-center py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
-                      Ver detalles →
-                    </Link>
-                  </div>
-                </Popup>
-              </Marker>
+              currentUser ? (
+                <Marker key={prop.id} position={[prop.lat, prop.lng]}
+                  icon={createPriceIcon(prop.price, activeId === prop.id, prop.status)}
+                  eventHandlers={{ mouseover: () => setActiveId(prop.id), mouseout: () => setActiveId(null) }}
+                >
+                  <Popup>
+                    <PropertyPopupContent prop={prop} />
+                  </Popup>
+                </Marker>
+              ) : (
+                <Circle key={prop.id} center={approxZoneCenter(prop.lat, prop.lng)} radius={900}
+                  pathOptions={{ color: "#1a56db", weight: 1, fillColor: "#1a56db", fillOpacity: 0.15 }}
+                  eventHandlers={{ mouseover: () => setActiveId(prop.id), mouseout: () => setActiveId(null) }}
+                >
+                  <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent>
+                    <span className="font-bold">
+                      ${prop.price >= 1000000 ? `${(prop.price / 1000000).toFixed(1)}M` : Math.round(prop.price / 1000) + "K"}
+                    </span>
+                  </Tooltip>
+                  <Popup>
+                    <PropertyPopupContent prop={prop} />
+                    <p className="text-[11px] text-gray-400 mt-2">
+                      🔒 Zona aproximada — inicia sesión para ver la ubicación exacta.
+                    </p>
+                  </Popup>
+                </Circle>
+              )
             ))}
           </MapContainer>
         </div>
