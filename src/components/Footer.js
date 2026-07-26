@@ -103,15 +103,15 @@ export default function Footer() {
           </p>
 
           <div className="flex gap-5">
-            <Link to="/" className="hover:text-blue-500 transition">
+            <Link to="/terminos" className="hover:text-blue-500 transition">
               Términos de uso
             </Link>
 
-            <Link to="/" className="hover:text-blue-500 transition">
+            <Link to="/privacidad" className="hover:text-blue-500 transition">
               Privacidad
             </Link>
 
-            <Link to="/" className="hover:text-blue-500 transition">
+            <Link to="/cookies" className="hover:text-blue-500 transition">
               Cookies
             </Link>
           </div>
