@@ -11,7 +11,7 @@ const SECTIONS = [
 
 export default function Cookies() {
   return (
-    <LegalPageLayout title="Política de cookies" updatedAt="24 de julio de 2026" sections={SECTIONS}>
+    <LegalPageLayout title="Política de cookies" updatedAt="27 de julio de 2026" sections={SECTIONS}>
       <Section id="resumen" title="1. Resumen">
         <p>
           A diferencia de muchos sitios, DomusRD no usa cookies para mantener tu sesión iniciada.
@@ -36,9 +36,22 @@ export default function Cookies() {
 
       <Section id="terceros" title="3. Cookies de terceros">
         <p>
-          Hoy DomusRD no usa cookies de análisis ni de publicidad de terceros. Si en el futuro
-          integramos herramientas que sí las usen (por ejemplo, analítica de uso), actualizaremos
-          esta página antes de activarlas.
+          Usamos <strong>Google Analytics</strong> para entender cómo se usa el sitio (qué páginas se
+          visitan, desde qué ciudad o dispositivo, cuánto tiempo se navega) y así poder mejorarlo.
+          Google Analytics sí usa cookies propias para esto. No usamos cookies de publicidad ni
+          compartimos tus datos personales (nombre, correo) con Google — solo datos de navegación
+          anónimos y agregados.
+        </p>
+        <p>
+          Puedes bloquear estas cookies desde la configuración de tu navegador, o instalando el{" "}
+          <a
+            href="https://tools.google.com/dlpage/gaoptout"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            complemento de inhabilitación de Google Analytics
+          </a>
+          , sin que eso afecte tu uso normal del sitio.
         </p>
       </Section>
 

@@ -2,7 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { initAnalytics } from './analytics';
 import reportWebVitals from './reportWebVitals';
+
+initAnalytics();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

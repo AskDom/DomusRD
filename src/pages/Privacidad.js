@@ -16,7 +16,7 @@ const SECTIONS = [
 
 export default function Privacidad() {
   return (
-    <LegalPageLayout title="Política de privacidad" updatedAt="24 de julio de 2026" sections={SECTIONS}>
+    <LegalPageLayout title="Política de privacidad" updatedAt="27 de julio de 2026" sections={SECTIONS}>
       <Section id="datos" title="1. Qué datos recopilamos">
         <p>Cuando usas DomusRD podemos recopilar:</p>
         <ul className="list-disc pl-5 space-y-1">
@@ -43,6 +43,7 @@ export default function Privacidad() {
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>Cloudinary</strong> — almacenamiento de las fotos que subes (propiedades y foto de perfil).</li>
           <li><strong>Resend</strong> — envío del correo de recuperación de contraseña.</li>
+          <li><strong>Google Analytics</strong> — estadísticas de uso del sitio (páginas visitadas, ciudad, dispositivo), de forma anónima y agregada. Ver detalle en nuestra <Link to="/cookies">política de cookies</Link>.</li>
         </ul>
         <p>
           Tu nombre, foto y las propiedades que publicas son visibles públicamente para cualquier

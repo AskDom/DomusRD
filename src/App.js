@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { trackPageView } from "./analytics";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { PropertiesProvider } from "./context/PropertiesContext";
@@ -27,6 +29,11 @@ import PageTransition from "./components/PageTransition";
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
