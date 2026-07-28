@@ -25,29 +25,36 @@ export function AuthProvider({ children }) {
   const [error,       setError]       = useState("");
   const [loading,     setLoading]     = useState(false);
 
-  // Al arrancar: verificar token con backend para refrescar el rol
-  // Si falla, simplemente seguimos con la sesión guardada en localStorage
-  useEffect(() => {
+  // Vuelve a pedir /me y refresca la sesión guardada (rol, emailVerified, etc).
+  // Se usa al arrancar la app y después de verificar el correo.
+  const refreshUser = useCallback(async () => {
     const token = localStorage.getItem("domusrd-token");
     if (!token) return;
 
-    fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
-      .then((data) => {
-        const user = normalizeUser(data.user);
-        localStorage.setItem("domusrd-session", JSON.stringify(user));
-        setCurrentUser(user);
-      })
-      .catch((status) => {
-        // Token expirado o inválido — limpiar sesión
-        if (status === 401 || status === 403) {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
           clearSession();
           setCurrentUser(null);
         }
-        // Cualquier otro error (red, servidor caído) — seguimos con sesión local
-      });
+        return;
+      }
+      const data = await res.json();
+      const user = normalizeUser(data.user);
+      localStorage.setItem("domusrd-session", JSON.stringify(user));
+      setCurrentUser(user);
+    } catch {
+      // Red caída o servidor no disponible — seguimos con la sesión local.
+    }
+  }, []);
+
+  // Al arrancar: verificar token con backend para refrescar el rol.
+  // Si falla, simplemente seguimos con la sesión guardada en localStorage.
+  useEffect(() => {
+    refreshUser();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -132,11 +139,28 @@ export function AuthProvider({ children }) {
     }
   }, [getToken]);
 
+  const resendVerificationEmail = useCallback(async () => {
+    try {
+      const res  = await fetch(`${API_URL}/api/auth/resend-verification`, {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, message: data.error || "No se pudo reenviar el correo." };
+      return { ok: true, message: data.message };
+    } catch {
+      return { ok: false, message: "No se pudo conectar con el servidor." };
+    }
+  }, [getToken]);
+
   // ← Ya NO bloqueamos el render — la app carga inmediatamente
   // El rol se actualiza en segundo plano cuando /api/auth/me responde
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, getToken, updateAvatar }}>
+    <AuthContext.Provider value={{
+      currentUser, login, register, logout, error, setError, loading, getToken, updateAvatar,
+      refreshUser, resendVerificationEmail,
+    }}>
       {children}
     </AuthContext.Provider>
   );
