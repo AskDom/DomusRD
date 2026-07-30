@@ -32,9 +32,8 @@ export default function Footer() {
           {/* BRAND */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="bg-blue-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md">
-                🏠
-              </div>
+              <img src="/logo192.png" alt="Domify" className="block dark:hidden w-10 h-10 rounded-2xl shadow-md object-contain" />
+              <img src="/logo192-dark.png" alt="Domify" className="hidden dark:block w-10 h-10 rounded-2xl shadow-md object-contain" />
 
               <div>
                 <h2 className="font-black text-xl leading-none text-gray-900 dark:text-white">
