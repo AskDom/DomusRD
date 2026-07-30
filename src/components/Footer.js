@@ -38,7 +38,7 @@ export default function Footer() {
 
               <div>
                 <h2 className="font-black text-xl leading-none text-gray-900 dark:text-white">
-                  DomusRD
+                  Domify
                 </h2>
                 <p className="text-xs text-gray-400">Real Estate</p>
               </div>
@@ -99,7 +99,7 @@ export default function Footer() {
       <div className="border-t border-gray-100 dark:border-gray-800 transition-colors">
         <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
           <p>
-            © {new Date().getFullYear()} DomusRD. Todos los derechos reservados.
+            © {new Date().getFullYear()} Domify. Todos los derechos reservados.
           </p>
 
           <div className="flex gap-5">

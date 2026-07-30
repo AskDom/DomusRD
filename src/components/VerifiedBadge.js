@@ -23,7 +23,7 @@ export default function VerifiedBadge({ size = "sm" }) {
   if (size === "lg") {
     return (
       <span
-        title="Propiedad verificada por DomusRD"
+        title="Propiedad verificada por Domify"
         className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 pl-1 pr-3 py-1 rounded-full text-xs font-bold"
       >
         <Seal px={18} />
@@ -32,7 +32,7 @@ export default function VerifiedBadge({ size = "sm" }) {
     );
   }
   return (
-    <span title="Propiedad verificada por DomusRD">
+    <span title="Propiedad verificada por Domify">
       <Seal px={18} />
     </span>
   );

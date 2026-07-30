@@ -59,8 +59,8 @@ export default function PropertyDetail() {
   const publishedByName = property
     ? (typeof property.publishedBy === "object" && property.publishedBy !== null
         ? property.publishedBy.name
-        : property.publishedBy || "DomusRD")
-    : "DomusRD";
+        : property.publishedBy || "Domify")
+    : "Domify";
 
   const publishedById = property
     ? (typeof property.publishedBy === "object" && property.publishedBy !== null
@@ -544,7 +544,7 @@ export default function PropertyDetail() {
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 flex gap-3">
                 <span className="text-lg shrink-0">🔒</span>
                 <p className="text-xs text-amber-700 dark:text-amber-400 leading-5 font-medium">
-                  DomusRD no cobra comisión por contactar. Verifica siempre la identidad del vendedor.
+                  Domify no cobra comisión por contactar. Verifica siempre la identidad del vendedor.
                 </p>
               </div>
 

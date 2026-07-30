@@ -77,7 +77,7 @@ export default function AuthModal({ isOpen, onClose }) {
       const firstName = user.name?.split(" ")[0] || form.name?.split(" ")[0] || "Usuario";
       banner({
         message: isLogin ? `¡Bienvenido de vuelta, ${firstName}! 👋` : `¡Cuenta creada, ${firstName}! 🎉`,
-        subtitle: isLogin ? `Nos alegra tenerte de vuelta en DomusRD` : `Ya puedes explorar y guardar propiedades`,
+        subtitle: isLogin ? `Nos alegra tenerte de vuelta en Domify` : `Ya puedes explorar y guardar propiedades`,
         type: "success",
         duration: 4500,
       });
@@ -127,7 +127,7 @@ export default function AuthModal({ isOpen, onClose }) {
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-3xl">🏠</span>
-                  <span className="text-white font-black text-2xl tracking-tight">DomusRD</span>
+                  <span className="text-white font-black text-2xl tracking-tight">Domify</span>
                 </div>
                 <p className="text-blue-200 text-sm">Tu plataforma inmobiliaria en República Dominicana</p>
               </div>
@@ -154,7 +154,7 @@ export default function AuthModal({ isOpen, onClose }) {
               {/* Testimonial */}
               <div className="relative z-10 bg-white/10 backdrop-blur rounded-2xl p-4">
                 <p className="text-white text-sm italic leading-relaxed">
-                  "Encontré el apartamento de mis sueños en menos de una semana gracias a DomusRD."
+                  "Encontré el apartamento de mis sueños en menos de una semana gracias a Domify."
                 </p>
                 <div className="flex items-center gap-2 mt-3">
                   <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm">M</div>
@@ -184,7 +184,7 @@ export default function AuthModal({ isOpen, onClose }) {
                     </motion.h2>
                   </AnimatePresence>
                   <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-                    {isLogin ? "Accede a tu cuenta de DomusRD" : "Únete a la comunidad inmobiliaria"}
+                    {isLogin ? "Accede a tu cuenta de Domify" : "Únete a la comunidad inmobiliaria"}
                   </p>
                 </div>
                 <button

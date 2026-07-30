@@ -89,7 +89,7 @@ export default function ResetPassword() {
       >
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">🏠</span>
-          <span className="font-black text-xl text-gray-900 dark:text-white">DomusRD</span>
+          <span className="font-black text-xl text-gray-900 dark:text-white">Domify</span>
         </div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white mt-4">Elige tu nueva contraseña</h1>
 

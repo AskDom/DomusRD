@@ -20,14 +20,14 @@ export default function Terminos() {
     <LegalPageLayout title="Términos de uso" updatedAt="24 de julio de 2026" sections={SECTIONS}>
       <Section id="aceptacion" title="1. Aceptación">
         <p>
-          Al crear una cuenta o usar DomusRD (el "Servicio") aceptas estos Términos de uso. Si no
+          Al crear una cuenta o usar Domify (el "Servicio") aceptas estos Términos de uso. Si no
           estás de acuerdo con alguna parte, no debes usar el Servicio.
         </p>
       </Section>
 
       <Section id="servicio" title="2. Descripción del servicio">
         <p>
-          DomusRD es un portal para publicar, buscar y gestionar propiedades en venta o alquiler en
+          Domify es un portal para publicar, buscar y gestionar propiedades en venta o alquiler en
           República Dominicana. Conectamos a personas que publican propiedades (vendedores y
           agentes) con personas interesadas en comprarlas o rentarlas, mediante búsqueda, mensajería
           directa entre usuarios y reseñas.
@@ -49,7 +49,7 @@ export default function Terminos() {
       <Section id="contenido" title="4. Contenido publicado por usuarios">
         <p>
           Al publicar una propiedad, foto, mensaje o reseña, declaras que tienes derecho a
-          compartirla y que la información es veraz. DomusRD no verifica de forma independiente
+          compartirla y que la información es veraz. Domify no verifica de forma independiente
           cada anuncio publicado; la insignia de "verificado" que puede mostrarse en algunas
           propiedades no constituye garantía de titularidad, estado legal ni exactitud de los datos
           de la propiedad.
@@ -73,14 +73,14 @@ export default function Terminos() {
 
       <Section id="propiedad" title="6. Propiedad intelectual">
         <p>
-          La marca DomusRD, el diseño y el software del Servicio nos pertenecen. El contenido que tú
+          La marca Domify, el diseño y el software del Servicio nos pertenecen. El contenido que tú
           subes (fotos de propiedades, descripciones, tu foto de perfil) sigue siendo tuyo.
         </p>
       </Section>
 
       <Section id="responsabilidad" title="7. Limitación de responsabilidad">
         <p>
-          DomusRD es un intermediario tecnológico: no somos parte de las negociaciones, contratos de
+          Domify es un intermediario tecnológico: no somos parte de las negociaciones, contratos de
           compraventa o alquiler entre usuarios, y no garantizamos la exactitud de los anuncios ni la
           idoneidad de ningún usuario como contraparte. Cualquier transacción entre usuarios corre
           por cuenta y riesgo de ambas partes. Te recomendamos verificar la titularidad y el estado
@@ -113,7 +113,7 @@ export default function Terminos() {
       <Section id="contacto" title="11. Contacto">
         <p>
           Para preguntas sobre estos términos, escríbenos a{" "}
-          <a href="mailto:soporte@domusrd.com">soporte@domusrd.com</a>{" "}
+          <a href="mailto:soporte@domify.com">soporte@domify.com</a>{" "}
           <span className="text-xs text-gray-400">(correo de ejemplo — reemplázalo por el real)</span>.
         </p>
       </Section>

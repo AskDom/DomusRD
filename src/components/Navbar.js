@@ -79,7 +79,7 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-2.5 shrink-0 mr-auto">
             <div className="bg-blue-600 text-white w-9 h-9 rounded-xl flex items-center justify-center shadow-md text-lg">🏠</div>
             <div className="leading-none">
-              <p className="font-black text-lg text-gray-900 dark:text-white tracking-tight">DomusRD</p>
+              <p className="font-black text-lg text-gray-900 dark:text-white tracking-tight">Domify</p>
               <p className="text-[10px] text-gray-400 font-medium">Real Estate</p>
             </div>
           </Link>

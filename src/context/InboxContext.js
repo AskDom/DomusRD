@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { io } from "socket.io-client";
 
 const API_URL    = process.env.REACT_APP_API_URL || "http://localhost:5000";
-const getToken   = () => localStorage.getItem("domusrd-token");
+const getToken   = () => localStorage.getItem("domify-token");
 const InboxContext = createContext();
 
 export function InboxProvider({ children }) {

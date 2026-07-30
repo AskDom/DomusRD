@@ -151,7 +151,7 @@ export default function Admin() {
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-4">
         <button onClick={() => navigate("/")} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition text-xl">←</button>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Panel de administración</h1>
-        <span className="ml-auto text-xs text-gray-400">DomusRD Admin</span>
+        <span className="ml-auto text-xs text-gray-400">Domify Admin</span>
       </div>
 
       {/* Tabs */}

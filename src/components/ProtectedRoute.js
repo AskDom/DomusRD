@@ -7,7 +7,7 @@ const ROLE_CONFIG = {
     allowed: ["Agente", "Vendedor"],
     icon: "🏠",
     title: "Solo agentes y vendedores pueden publicar",
-    description: "Regístrate como Agente o Vendedor para publicar propiedades en DomusRD.",
+    description: "Regístrate como Agente o Vendedor para publicar propiedades en Domify.",
   },
 };
 

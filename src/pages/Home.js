@@ -106,7 +106,7 @@ export default function Home() {
   const [heroIndex,     setHeroIndex]     = useState(0);
   const [viewMode,      setViewMode]      = useState("grid"); // "grid" | "map"
   const [activePin,     setActivePin]     = useState(null);
-  const [searchHistory, setSearchHistory] = useLocalStorage("domusrd-search-history", []);
+  const [searchHistory, setSearchHistory] = useLocalStorage("domify-search-history", []);
 
   const navigate      = useNavigate();
   const [searchParams] = useSearchParams();

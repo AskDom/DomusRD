@@ -14,7 +14,7 @@ export default function Cookies() {
     <LegalPageLayout title="Política de cookies" updatedAt="27 de julio de 2026" sections={SECTIONS}>
       <Section id="resumen" title="1. Resumen">
         <p>
-          A diferencia de muchos sitios, DomusRD no usa cookies para mantener tu sesión iniciada.
+          A diferencia de muchos sitios, Domify no usa cookies para mantener tu sesión iniciada.
           Usamos el <strong>almacenamiento local de tu navegador</strong> (<code>localStorage</code>),
           que es similar en propósito a una cookie pero funciona distinto: solo tu navegador puede
           leerlo, no se envía automáticamente en cada petición al servidor, y no lo compartimos con

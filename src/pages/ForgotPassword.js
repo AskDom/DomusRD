@@ -49,7 +49,7 @@ export default function ForgotPassword() {
       >
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">🏠</span>
-          <span className="font-black text-xl text-gray-900 dark:text-white">DomusRD</span>
+          <span className="font-black text-xl text-gray-900 dark:text-white">Domify</span>
         </div>
 
         {sent ? (

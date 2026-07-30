@@ -74,7 +74,7 @@ export default function Publish() {
       files.forEach((f) => fd.append("images", f));
       const res  = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("domusrd-token")}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("domify-token")}` },
         body: fd,
       });
       const data = await res.json();
@@ -141,7 +141,7 @@ export default function Publish() {
             Publicar propiedad
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-            Completa la información para publicar tu propiedad en DomusRD
+            Completa la información para publicar tu propiedad en Domify
           </p>
         </div>
 

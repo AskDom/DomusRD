@@ -21,7 +21,7 @@ export function PropertiesProvider({ children }) {
   const [properties,    setProperties]    = useState([]);
   const [pagination,    setPagination]    = useState({ page: 1, totalPages: 1, hasMore: false, total: 0 });
   const [favorites,     setFavorites]     = useState(() => {
-    try { return JSON.parse(localStorage.getItem("domusrd-favorites")) || []; }
+    try { return JSON.parse(localStorage.getItem("domify-favorites")) || []; }
     catch { return []; }
   });
   const [userProperties, setUserProperties] = useState([]);
@@ -107,14 +107,14 @@ export function PropertiesProvider({ children }) {
 
   // ── FAVORITOS ─────────────────────────────────────────────────────────────
   const fetchFavorites = useCallback(async () => {
-    const token = localStorage.getItem("domusrd-token");
-    if (!token) { setFavorites([]); localStorage.removeItem("domusrd-favorites"); return; }
+    const token = localStorage.getItem("domify-token");
+    if (!token) { setFavorites([]); localStorage.removeItem("domify-favorites"); return; }
     try {
       const res  = await fetch(`${API_URL}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const data = await res.json();
       setFavorites(data.favorites);
-      localStorage.setItem("domusrd-favorites", JSON.stringify(data.favorites));
+      localStorage.setItem("domify-favorites", JSON.stringify(data.favorites));
     } catch (err) {
       console.error("fetchFavorites error:", err);
     }
@@ -201,12 +201,12 @@ export function PropertiesProvider({ children }) {
 
   // ── TOGGLE FAVORITO ───────────────────────────────────────────────────────
   const toggleFavorite = useCallback(async (id) => {
-    const token = localStorage.getItem("domusrd-token");
+    const token = localStorage.getItem("domify-token");
     if (!token) return;
     const isCurrentlyFav = favorites.includes(id);
     setFavorites((prev) => {
       const next = isCurrentlyFav ? prev.filter((f) => f !== id) : [...prev, id];
-      localStorage.setItem("domusrd-favorites", JSON.stringify(next));
+      localStorage.setItem("domify-favorites", JSON.stringify(next));
       return next;
     });
     try {
@@ -218,7 +218,7 @@ export function PropertiesProvider({ children }) {
       console.error("toggleFavorite sync error:", err);
       setFavorites((prev) => {
         const reverted = isCurrentlyFav ? [...prev, id] : prev.filter((f) => f !== id);
-        localStorage.setItem("domusrd-favorites", JSON.stringify(reverted));
+        localStorage.setItem("domify-favorites", JSON.stringify(reverted));
         return reverted;
       });
     }

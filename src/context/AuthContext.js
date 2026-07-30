@@ -6,15 +6,15 @@ const ROLE_DISPLAY = { CLIENTE: "Cliente", VENDEDOR: "Vendedor", AGENTE: "Agente
 const normalizeUser = (user) => ({ ...user, role: ROLE_DISPLAY[user.role] || user.role });
 
 const saveSession  = (token, user) => {
-  localStorage.setItem("domusrd-token",   token);
-  localStorage.setItem("domusrd-session", JSON.stringify(user));
+  localStorage.setItem("domify-token",   token);
+  localStorage.setItem("domify-session", JSON.stringify(user));
 };
 const clearSession = () => {
-  localStorage.removeItem("domusrd-token");
-  localStorage.removeItem("domusrd-session");
+  localStorage.removeItem("domify-token");
+  localStorage.removeItem("domify-session");
 };
 const loadSession = () => {
-  try { const u = localStorage.getItem("domusrd-session"); return u ? JSON.parse(u) : null; }
+  try { const u = localStorage.getItem("domify-session"); return u ? JSON.parse(u) : null; }
   catch { return null; }
 };
 
@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
   // Al arrancar: verificar token con backend para refrescar el rol
   // Si falla, simplemente seguimos con la sesión guardada en localStorage
   useEffect(() => {
-    const token = localStorage.getItem("domusrd-token");
+    const token = localStorage.getItem("domify-token");
     if (!token) return;
 
     fetch(`${API_URL}/api/auth/me`, {
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
       .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then((data) => {
         const user = normalizeUser(data.user);
-        localStorage.setItem("domusrd-session", JSON.stringify(user));
+        localStorage.setItem("domify-session", JSON.stringify(user));
         setCurrentUser(user);
       })
       .catch((status) => {
@@ -105,7 +105,7 @@ export function AuthProvider({ children }) {
     setCurrentUser(null);
   }, []);
 
-  const getToken = useCallback(() => localStorage.getItem("domusrd-token"), []);
+  const getToken = useCallback(() => localStorage.getItem("domify-token"), []);
 
   const updateAvatar = useCallback(async (file) => {
     setError("");
@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
         return false;
       }
       const user = normalizeUser(data.user);
-      localStorage.setItem("domusrd-session", JSON.stringify(user));
+      localStorage.setItem("domify-session", JSON.stringify(user));
       setCurrentUser(user);
       return user;
     } catch {

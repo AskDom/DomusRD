@@ -57,7 +57,7 @@ export default function NotFound() {
           className="flex items-center gap-2 mb-12"
         >
           <span className="text-2xl">🏠</span>
-          <span className="text-white font-black text-xl tracking-tight">DomusRD</span>
+          <span className="text-white font-black text-xl tracking-tight">Domify</span>
         </motion.div>
 
         {/* Número 404 */}

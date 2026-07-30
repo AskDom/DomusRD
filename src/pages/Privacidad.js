@@ -18,7 +18,7 @@ export default function Privacidad() {
   return (
     <LegalPageLayout title="Política de privacidad" updatedAt="27 de julio de 2026" sections={SECTIONS}>
       <Section id="datos" title="1. Qué datos recopilamos">
-        <p>Cuando usas DomusRD podemos recopilar:</p>
+        <p>Cuando usas Domify podemos recopilar:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>Datos de cuenta:</strong> nombre, correo electrónico y contraseña (almacenada de forma cifrada, nunca en texto plano).</li>
           <li><strong>Foto de perfil</strong>, si decides subir una.</li>
@@ -57,7 +57,7 @@ export default function Privacidad() {
           Tu contraseña se guarda cifrada (nunca en texto plano). El acceso a tu cuenta se controla
           con un token de sesión, y limitamos los intentos de inicio de sesión para dificultar
           ataques de fuerza bruta. Ningún sistema es 100% seguro, así que te recomendamos usar una
-          contraseña única para DomusRD.
+          contraseña única para Domify.
         </p>
         <p>
           El token de sesión se guarda en el almacenamiento local de tu navegador
@@ -104,7 +104,7 @@ export default function Privacidad() {
       <Section id="contacto" title="9. Contacto">
         <p>
           Para ejercer tus derechos o hacer preguntas sobre esta política, escríbenos a{" "}
-          <a href="mailto:privacidad@domusrd.com">privacidad@domusrd.com</a>{" "}
+          <a href="mailto:privacidad@domify.com">privacidad@domify.com</a>{" "}
           <span className="text-xs text-gray-400">(correo de ejemplo — reemplázalo por el real)</span>.
         </p>
       </Section>

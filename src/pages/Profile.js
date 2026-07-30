@@ -377,7 +377,7 @@ export default function Profile() {
       files.forEach((f) => fd.append("images", f));
       const res  = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("domusrd-token")}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("domify-token")}` },
         body: fd,
       });
       const data = await res.json();
