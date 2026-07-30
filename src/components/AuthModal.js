@@ -126,7 +126,7 @@ export default function AuthModal({ isOpen, onClose }) {
               {/* Logo */}
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-3xl">🏠</span>
+                  <img src="/logo192-dark.png" alt="Domify" className="w-8 h-8 object-contain" />
                   <span className="text-white font-black text-2xl tracking-tight">Domify</span>
                 </div>
                 <p className="text-blue-200 text-sm">Tu plataforma inmobiliaria en República Dominicana</p>

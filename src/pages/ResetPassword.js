@@ -88,7 +88,8 @@ export default function ResetPassword() {
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-8"
       >
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">🏠</span>
+          <img src="/logo192.png" alt="Domify" className="block dark:hidden w-7 h-7 object-contain" />
+          <img src="/logo192-dark.png" alt="Domify" className="hidden dark:block w-7 h-7 object-contain" />
           <span className="font-black text-xl text-gray-900 dark:text-white">Domify</span>
         </div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white mt-4">Elige tu nueva contraseña</h1>

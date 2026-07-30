@@ -56,7 +56,7 @@ export default function NotFound() {
           transition={{ duration: 0.5 }}
           className="flex items-center gap-2 mb-12"
         >
-          <span className="text-2xl">🏠</span>
+          <img src="/logo192-dark.png" alt="Domify" className="w-7 h-7 object-contain" />
           <span className="text-white font-black text-xl tracking-tight">Domify</span>
         </motion.div>
 
