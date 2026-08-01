@@ -31,9 +31,15 @@ export default function VerifiedBadge({ size = "sm" }) {
       </span>
     );
   }
+  // Mismo tratamiento visual (fondo + sombra) que los pills de estado/tipo
+  // que lo acompañan sobre la foto — sin esto, el sello flotaba solo sobre
+  // la imagen y se perdía, no se leía como parte del mismo grupo de badges.
   return (
-    <span title="Propiedad verificada por Domify">
-      <Seal px={18} />
+    <span
+      title="Propiedad verificada por Domify"
+      className="inline-flex items-center justify-center bg-white/95 dark:bg-gray-900/90 rounded-full p-1 shadow-md"
+    >
+      <Seal px={16} />
     </span>
   );
 }

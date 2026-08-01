@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
+import { Bed, Bath, Car, MapPin } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
@@ -318,15 +319,17 @@ export default function SearchResults() {
                       </div>
                       <div className="p-3">
                         <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
-                        <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city || "Rep. Dominicana"}</p>
+                        <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1">
+                          <MapPin size={12} strokeWidth={2.25} /> {prop.city || "Rep. Dominicana"}
+                        </p>
                         <p className="text-blue-600 dark:text-blue-400 font-black text-base mt-1">
                           ${Number(prop.price).toLocaleString()}
                           {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
                         </p>
                         <div className="flex gap-3 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-400 text-xs">
-                          <span>🛏️ {prop.rooms}</span>
-                          <span>🛁 {prop.baths}</span>
-                          <span>🚗 {prop.parking}</span>
+                          <span className="flex items-center gap-1"><Bed size={13} strokeWidth={2.25} /> {prop.rooms}</span>
+                          <span className="flex items-center gap-1"><Bath size={13} strokeWidth={2.25} /> {prop.baths}</span>
+                          <span className="flex items-center gap-1"><Car size={13} strokeWidth={2.25} /> {prop.parking}</span>
                         </div>
                       </div>
                     </div>

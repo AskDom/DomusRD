@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bed, Bath, Car, MapPin } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import AuthModal from "../components/AuthModal";
@@ -324,16 +325,16 @@ export default function PropertyDetail() {
             {property.title}
           </h1>
           <p className="text-gray-400 mt-2 flex items-center gap-1.5 text-sm">
-            📍 {property.city || "República Dominicana"}
+            <MapPin size={14} strokeWidth={2.25} /> {property.city || "República Dominicana"}
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {[
-              { icon: "🛏️", value: property.rooms, label: "hab" },
-              { icon: "🛁", value: property.baths, label: "baños" },
-              { icon: "🚗", value: property.parking, label: "parq" },
+              { Icon: Bed, value: property.rooms, label: "hab" },
+              { Icon: Bath, value: property.baths, label: "baños" },
+              { Icon: Car, value: property.parking, label: "parq" },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full px-3.5 py-2 transition-colors">
-                <span className="text-sm">{s.icon}</span>
+                <s.Icon size={15} strokeWidth={2.25} className="text-gray-500 dark:text-gray-400" />
                 <span className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</span>
                 <span className="text-gray-400 text-xs">{s.label}</span>
               </div>
@@ -405,7 +406,9 @@ export default function PropertyDetail() {
                   <span className="w-1 h-5 bg-blue-600 rounded-full" />
                   Ubicación
                 </h2>
-                <p className="text-sm text-gray-400 mb-3">📍 {property.city || "República Dominicana"}</p>
+                <p className="text-sm text-gray-400 mb-3 flex items-center gap-1">
+                  <MapPin size={13} strokeWidth={2.25} /> {property.city || "República Dominicana"}
+                </p>
 
                 {currentUser ? (
                   <MapContainer center={[property.lat, property.lng]} zoom={14} className="h-[280px] rounded-2xl">

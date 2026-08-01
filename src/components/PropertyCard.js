@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Bed, Bath, Car, MapPin } from "lucide-react";
 import PropertyImage from "./PropertyImage";
 import VerifiedBadge from "./VerifiedBadge";
 
@@ -91,25 +92,20 @@ export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavori
               {prop.title}
             </h3>
             <p className="text-gray-400 text-xs mt-1 flex items-center gap-1">
-              <span>📍</span> {prop.city || "República Dominicana"}
+              <MapPin size={12} strokeWidth={2.25} /> {prop.city || "República Dominicana"}
             </p>
 
             {/* Amenidades */}
             <div className="flex gap-3 mt-auto pt-3 border-t border-gray-100 dark:border-gray-700 text-xs">
               <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                <span className="text-sm">🛏</span> {prop.rooms} hab
+                <Bed size={14} strokeWidth={2.25} /> {prop.rooms} hab
               </span>
               <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                <span className="text-sm">🛁</span> {prop.baths} baños
+                <Bath size={14} strokeWidth={2.25} /> {prop.baths} baños
               </span>
               {prop.parking > 0 && (
                 <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                  <span className="text-sm">🚗</span> {prop.parking}
-                </span>
-              )}
-              {prop.verified && (
-                <span className="ml-auto text-emerald-500 font-semibold text-[10px] flex items-center gap-0.5">
-                  ✓ Verificada
+                  <Car size={14} strokeWidth={2.25} /> {prop.parking}
                 </span>
               )}
             </div>
