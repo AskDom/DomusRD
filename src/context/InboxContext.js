@@ -26,8 +26,10 @@ export function InboxProvider({ children }) {
         id:            m.id,
         fromId:        m.fromId,
         fromName:      m.from?.name  || "Usuario",
+        fromAvatar:    m.from?.avatar || null,
         toId:          m.toId,
         toName:        m.to?.name    || "Usuario",
+        toAvatar:      m.to?.avatar || null,
         propertyId:    m.propertyId,
         propertyTitle: m.property?.title || "",
         text:          m.text,
@@ -111,11 +113,11 @@ export function InboxProvider({ children }) {
   }, []);
 
   // ── ENVIAR ─────────────────────────────────────────────────────────────────
-  const sendMessage = useCallback(async ({ fromId, fromName, toId, toName, propertyId, propertyTitle, text, replyToId = null }) => {
+  const sendMessage = useCallback(async ({ fromId, fromName, fromAvatar, toId, toName, toAvatar, propertyId, propertyTitle, text, replyToId = null }) => {
     const token = getToken();
     const tempMsg = {
       id: `temp-${Date.now()}`,
-      fromId, fromName, toId, toName,
+      fromId, fromName, fromAvatar, toId, toName, toAvatar,
       propertyId, propertyTitle, text, replyToId,
       createdAt: new Date().toISOString(),
       read: false,
@@ -134,8 +136,10 @@ export function InboxProvider({ children }) {
         id:            data.message.id,
         fromId:        data.message.fromId,
         fromName:      data.message.from?.name  || fromName,
+        fromAvatar:    data.message.from?.avatar || fromAvatar || null,
         toId:          data.message.toId,
         toName:        data.message.to?.name    || toName,
+        toAvatar:      data.message.to?.avatar   || toAvatar || null,
         propertyId:    data.message.propertyId,
         propertyTitle: data.message.property?.title || propertyTitle,
         text:          data.message.text,
@@ -154,11 +158,12 @@ export function InboxProvider({ children }) {
   }, []);
 
   // ── RESPONDER ──────────────────────────────────────────────────────────────
-  const replyMessage = useCallback(async ({ originalMsg, fromId, fromName, text }) => {
+  const replyMessage = useCallback(async ({ originalMsg, fromId, fromName, fromAvatar, text }) => {
     return sendMessage({
-      fromId, fromName,
+      fromId, fromName, fromAvatar,
       toId:          originalMsg.fromId,
       toName:        originalMsg.fromName,
+      toAvatar:      originalMsg.fromAvatar,
       propertyId:    originalMsg.propertyId,
       propertyTitle: originalMsg.propertyTitle,
       text,
@@ -203,11 +208,12 @@ export function InboxProvider({ children }) {
     const relevant = messages.filter((m) => m.fromId === userId || m.toId === userId);
     const convMap  = {};
     relevant.forEach((m) => {
-      const otherId   = m.fromId === userId ? m.toId   : m.fromId;
-      const otherName = m.fromId === userId ? m.toName : m.fromName;
+      const otherId     = m.fromId === userId ? m.toId       : m.fromId;
+      const otherName   = m.fromId === userId ? m.toName     : m.fromName;
+      const otherAvatar = m.fromId === userId ? m.toAvatar   : m.fromAvatar;
       const key = `${[userId, otherId].sort().join("-")}-${m.propertyId}`;
       if (!convMap[key]) {
-        convMap[key] = { key, otherId, otherName, propertyId: m.propertyId, propertyTitle: m.propertyTitle, messages: [], unread: 0 };
+        convMap[key] = { key, otherId, otherName, otherAvatar, propertyId: m.propertyId, propertyTitle: m.propertyTitle, messages: [], unread: 0 };
       }
       convMap[key].messages.push(m);
       if (m.toId === userId && !m.read) convMap[key].unread++;

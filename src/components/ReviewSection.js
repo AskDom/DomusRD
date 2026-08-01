@@ -34,9 +34,17 @@ function ReviewCard({ review, isOwn, onDelete }) {
     <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm flex-shrink-0">
-            {review.user?.name?.charAt(0).toUpperCase()}
-          </div>
+          {review.user?.avatar ? (
+            <img
+              src={review.user.avatar}
+              alt={review.user.name}
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm flex-shrink-0">
+              {review.user?.name?.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <p className="font-semibold text-gray-900 dark:text-white text-sm">{review.user?.name}</p>
             <p className="text-xs text-gray-400">

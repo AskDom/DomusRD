@@ -5,10 +5,13 @@ import Navbar from "../components/Navbar";
 import { useInbox } from "../context/InboxContext";
 import { useAuth } from "../context/AuthContext";
 
-function Avatar({ name, size = "w-10 h-10", text = "text-sm" }) {
+function Avatar({ name, src, size = "w-10 h-10", text = "text-sm" }) {
   const initial = name?.charAt(0).toUpperCase() || "?";
   const colors  = ["bg-blue-500","bg-emerald-500","bg-violet-500","bg-rose-500","bg-amber-500"];
   const color   = colors[initial.charCodeAt(0) % colors.length];
+  if (src) {
+    return <img src={src} alt={name} className={`${size} rounded-full object-cover flex-shrink-0`} />;
+  }
   return (
     <div className={`${size} ${color} ${text} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>
       {initial}
@@ -85,8 +88,10 @@ export default function Inbox() {
     await sendMessage({
       fromId:        currentUser.id,
       fromName:      currentUser.name,
+      fromAvatar:    currentUser.avatar,
       toId:          selectedConv.otherId,
       toName:        selectedConv.otherName,
+      toAvatar:      selectedConv.otherAvatar,
       propertyId:    selectedConv.propertyId,
       propertyTitle: selectedConv.propertyTitle,
       text,
@@ -186,7 +191,7 @@ export default function Inbox() {
                       }`}
                     >
                       <div className="relative">
-                        <Avatar name={conv.otherName} size="w-12 h-12" />
+                        <Avatar name={conv.otherName} src={conv.otherAvatar} size="w-12 h-12" />
                         {hasUnread && (
                           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 rounded-full border-2 border-white dark:border-gray-950 flex items-center justify-center text-white text-[9px] font-black">
                             {conv.unread}
@@ -237,7 +242,7 @@ export default function Inbox() {
                 >
                   ←
                 </button>
-                <Avatar name={selectedConv.otherName} size="w-10 h-10" />
+                <Avatar name={selectedConv.otherName} src={selectedConv.otherAvatar} size="w-10 h-10" />
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-900 dark:text-white text-sm">{selectedConv.otherName}</p>
                   <Link
@@ -278,7 +283,7 @@ export default function Inbox() {
                         transition={{ duration: 0.2 }}
                         className={`flex gap-2.5 ${isMe ? "flex-row-reverse" : "flex-row"}`}
                       >
-                        {!isMe && <Avatar name={msg.fromName} size="w-8 h-8" text="text-xs" />}
+                        {!isMe && <Avatar name={msg.fromName} src={msg.fromAvatar} size="w-8 h-8" text="text-xs" />}
 
                         <div className={`max-w-[72%] ${isMe ? "items-end" : "items-start"} flex flex-col gap-1`}>
                           <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
