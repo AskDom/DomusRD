@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, Building2, Heart as HeartLucide, Mail, LogOut, ChevronDown, Bell as BellLucide, Home as HomeLucide, ShieldCheck, Plus, CheckCheck } from "lucide-react";
 import AuthModal from "./AuthModal";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -55,6 +57,13 @@ const BellIcon = () => (
   </svg>
 );
 
+const ROLE_CONFIG = {
+  Agente:   { label: "Agente",   emoji: "⭐",  bg: "from-amber-500 to-orange-500" },
+  Vendedor: { label: "Vendedor", emoji: "🏠",  bg: "from-emerald-500 to-green-600" },
+  Admin:    { label: "Admin",    emoji: "🛡️", bg: "from-purple-500 to-fuchsia-600" },
+  Cliente:  { label: "Cliente",  emoji: "👤",  bg: "from-blue-500 to-sky-500" },
+};
+
 export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -67,6 +76,7 @@ export default function Navbar() {
   const { getUnreadCount } = useInbox();
   const { notifications, unreadCount: unreadNotifs, markAsRead, markAllAsRead } = useNotifications();
   const unread = currentUser ? getUnreadCount(currentUser.id) : 0;
+  const roleConfig = ROLE_CONFIG[currentUser?.role] || ROLE_CONFIG.Cliente;
 
   const iconBtn = "relative flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200";
 
@@ -120,37 +130,66 @@ export default function Navbar() {
                   )}
                 </button>
 
-                {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-50">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                      <p className="text-sm font-black text-gray-900 dark:text-white">Notificaciones</p>
-                      {unreadNotifs > 0 && (
-                        <button onClick={markAllAsRead} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                          Marcar todas leídas
-                        </button>
-                      )}
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <p className="text-center text-gray-400 text-sm py-8">No tienes notificaciones</p>
-                      ) : (
-                        notifications.map((n) => (
-                          <Link
-                            key={n.id}
-                            to={n.propertyId ? `/property/${n.propertyId}` : "#"}
-                            onClick={() => { markAsRead(n.id); setNotifOpen(false); }}
-                            className={`block px-4 py-3 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition ${
-                              n.read ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white font-semibold"
-                            }`}
-                          >
-                            {!n.read && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 mr-2 align-middle" />}
-                            {n.message}
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {notifOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 mt-3 w-80 max-w-[90vw] origin-top-right bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-100 dark:border-gray-700/80 rounded-3xl shadow-2xl shadow-gray-900/10 dark:shadow-black/40 overflow-hidden z-50"
+                      >
+                        <div className="px-4 py-3.5 bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-between">
+                          <span className="flex items-center gap-2 text-white">
+                            <BellLucide size={15} strokeWidth={2.25} />
+                            <p className="text-sm font-black">Notificaciones</p>
+                          </span>
+                          {unreadNotifs > 0 && (
+                            <button
+                              onClick={markAllAsRead}
+                              className="flex items-center gap-1 text-[11px] text-white/90 font-semibold bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded-full transition-colors"
+                            >
+                              <CheckCheck size={12} strokeWidth={2.5} /> Marcar leídas
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-96 overflow-y-auto p-1.5">
+                          {notifications.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-10">
+                              <div className="w-11 h-11 rounded-2xl bg-gray-50 dark:bg-gray-700/60 flex items-center justify-center mb-2.5">
+                                <BellLucide size={18} strokeWidth={2} className="text-gray-300 dark:text-gray-500" />
+                              </div>
+                              <p className="text-gray-400 text-sm">No tienes notificaciones</p>
+                            </div>
+                          ) : (
+                            notifications.map((n) => (
+                              <Link
+                                key={n.id}
+                                to={n.propertyId ? `/property/${n.propertyId}` : "#"}
+                                onClick={() => { markAsRead(n.id); setNotifOpen(false); }}
+                                className={`flex items-start gap-3 px-2.5 py-2.5 rounded-2xl text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/60 ${
+                                  n.read ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white font-semibold"
+                                }`}
+                              >
+                                <span className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                  n.read
+                                    ? "bg-gray-50 dark:bg-gray-700/60 text-gray-300 dark:text-gray-500"
+                                    : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                                }`}>
+                                  <BellLucide size={14} strokeWidth={2.25} />
+                                </span>
+                                <span className="flex-1 leading-snug pt-1">{n.message}</span>
+                                {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2.5 flex-shrink-0" />}
+                              </Link>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
@@ -203,62 +242,103 @@ export default function Navbar() {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
-                {currentUser.avatar ? (
-                  <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-lg object-cover shadow-sm" />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className={`p-[2px] rounded-xl bg-gradient-to-br ${roleConfig.bg} shadow-sm`}>
+                  {currentUser.avatar ? (
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-7 h-7 rounded-[9px] object-cover block" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-[9px] bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex items-center justify-center font-black text-sm">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
                 <div className="hidden md:block text-left leading-none">
                   <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name.split(" ")[0]}</p>
-                  <p className={`text-[10px] font-semibold ${
-                    currentUser.role === "Agente" ? "text-yellow-500" :
-                    currentUser.role === "Vendedor" ? "text-green-500" : "text-blue-500"
-                  }`}>
-                    {currentUser.role === "Admin" ? "🛡️ Admin" :
-                     currentUser.role === "Agente" ? "⭐ Agente" :
-                     currentUser.role === "Vendedor" ? "🏠 Vendedor" : "👤 Cliente"}
+                  <p className={`text-[10px] font-semibold bg-gradient-to-r ${roleConfig.bg} bg-clip-text text-transparent`}>
+                    {roleConfig.emoji} {roleConfig.label}
                   </p>
                 </div>
-                <svg className="hidden md:block w-3.5 h-3.5 text-gray-400 ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={2.5}
+                  className={`hidden md:block text-gray-400 ml-0.5 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {/* DROPDOWN */}
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-50">
-                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                    <p className="text-sm font-black text-gray-900 dark:text-white">{currentUser.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
-                  </div>
-                  {[
-                    { to: "/profile", label: "Mi perfil", icon: "👤" },
-                    { to: "/profile?tab=propiedades", label: "Mis propiedades", icon: "🏠" },
-                    { to: "/favorites", label: "Favoritos", icon: "❤️" },
-                    { to: "/inbox", label: "Inbox", icon: "✉️", badge: unread },
-                  ].map((item) => (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="absolute right-0 mt-3 w-64 origin-top-right bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-100 dark:border-gray-700/80 rounded-3xl shadow-2xl shadow-gray-900/10 dark:shadow-black/40 overflow-hidden z-50"
                     >
-                      <span className="flex items-center gap-2.5">{item.icon} {item.label}</span>
-                      {item.badge > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">{item.badge}</span>
-                      )}
-                    </Link>
-                  ))}
-                  <div className="border-t border-gray-100 dark:border-gray-700">
-                    <button
-                      onClick={() => { logout(); setUserMenuOpen(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2.5"
-                    >
-                      🚪 Cerrar sesión
-                    </button>
-                  </div>
-                </div>
-              )}
+                      {/* HEADER */}
+                      <div className={`relative overflow-hidden px-5 py-4 bg-gradient-to-br ${roleConfig.bg}`}>
+                        <div className="absolute -top-8 -right-6 w-24 h-24 bg-white/15 rounded-full blur-2xl pointer-events-none" />
+                        <div className="relative flex items-center gap-3">
+                          {currentUser.avatar ? (
+                            <img src={currentUser.avatar} alt={currentUser.name} className="w-11 h-11 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg flex-shrink-0" />
+                          ) : (
+                            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur ring-2 ring-white/40 text-white flex items-center justify-center font-black text-lg shadow-lg flex-shrink-0">
+                              {currentUser.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-black text-white truncate">{currentUser.name}</p>
+                            <p className="text-[11px] text-white/75 truncate">{currentUser.email}</p>
+                          </div>
+                        </div>
+                        <span className="relative inline-flex items-center gap-1 mt-3 bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                          {roleConfig.emoji} {roleConfig.label}
+                        </span>
+                      </div>
+
+                      {/* ITEMS */}
+                      <div className="p-1.5">
+                        {[
+                          { to: "/profile", label: "Mi perfil", Icon: User, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400" },
+                          { to: "/profile?tab=propiedades", label: "Mis propiedades", Icon: Building2, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400" },
+                          { to: "/favorites", label: "Favoritos", Icon: HeartLucide, color: "text-rose-600 bg-rose-50 dark:bg-rose-900/30 dark:text-rose-400" },
+                          { to: "/inbox", label: "Inbox", Icon: Mail, color: "text-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-400", badge: unread },
+                        ].map((item) => (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            onClick={() => setUserMenuOpen(false)}
+                            className="group flex items-center justify-between px-2.5 py-2 rounded-2xl text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors"
+                          >
+                            <span className="flex items-center gap-3">
+                              <span className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${item.color}`}>
+                                <item.Icon size={15} strokeWidth={2.25} />
+                              </span>
+                              <span className="font-semibold">{item.label}</span>
+                            </span>
+                            {item.badge > 0 && (
+                              <span className="bg-red-500 text-white text-[11px] min-w-[18px] text-center px-1.5 py-0.5 rounded-full font-bold">{item.badge}</span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+
+                      <div className="border-t border-gray-100 dark:border-gray-700/70 p-1.5">
+                        <button
+                          onClick={() => { logout(); setUserMenuOpen(false); }}
+                          className="w-full flex items-center gap-3 px-2.5 py-2 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <span className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/30 text-red-500">
+                            <LogOut size={15} strokeWidth={2.25} />
+                          </span>
+                          Cerrar sesión
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <button
@@ -279,37 +359,86 @@ export default function Navbar() {
         </div>
 
         {/* MOBILE MENU */}
-        {menuOpen && (
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 flex flex-col gap-1">
-            <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-              🏠 Inicio
-            </Link>
-            <Link to="/favorites" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-              ❤️ Favoritos {favorites.length > 0 && `(${favorites.length})`}
-            </Link>
-            {currentUser && (
-              <>
-                <Link to="/inbox" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                  ✉️ Inbox {unread > 0 && `(${unread})`}
-                </Link>
-                <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                  👤 Mi perfil
-                </Link>
-                {currentUser.role === "Admin" && (
-                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-purple-600 dark:text-purple-300 px-3 py-2.5 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
-                    🛡️ Panel admin
-                  </Link>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="lg:hidden border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden"
+            >
+              <div className="px-4 py-3 flex flex-col gap-1">
+                {currentUser && (
+                  <div className={`relative overflow-hidden flex items-center gap-3 px-4 py-3.5 mb-1.5 rounded-2xl bg-gradient-to-br ${roleConfig.bg}`}>
+                    <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/15 rounded-full blur-2xl pointer-events-none" />
+                    {currentUser.avatar ? (
+                      <img src={currentUser.avatar} alt={currentUser.name} className="relative w-10 h-10 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg flex-shrink-0" />
+                    ) : (
+                      <div className="relative w-10 h-10 rounded-2xl bg-white/20 backdrop-blur ring-2 ring-white/40 text-white flex items-center justify-center font-black shadow-lg flex-shrink-0">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="relative min-w-0">
+                      <p className="text-sm font-black text-white truncate">{currentUser.name}</p>
+                      <p className="text-[11px] text-white/80 font-semibold">{roleConfig.emoji} {roleConfig.label}</p>
+                    </div>
+                  </div>
                 )}
-                <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left text-sm font-medium text-red-500 px-3 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                  🚪 Cerrar sesión
-                </button>
-              </>
-            )}
-            <Link to="/publish" onClick={() => setMenuOpen(false)} className="mt-1 bg-blue-600 text-white text-center px-5 py-2.5 rounded-xl font-semibold text-sm">
-              + Publicar propiedad
-            </Link>
-          </div>
-        )}
+
+                {[
+                  { to: "/", label: "Inicio", Icon: HomeLucide, color: "text-gray-600 bg-gray-100 dark:bg-gray-700/60 dark:text-gray-300" },
+                  ...(currentUser ? [
+                    { to: "/profile", label: "Mi perfil", Icon: User, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400" },
+                    { to: "/profile?tab=propiedades", label: "Mis propiedades", Icon: Building2, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400" },
+                    { to: "/inbox", label: "Inbox", Icon: Mail, color: "text-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-400", badge: unread },
+                  ] : []),
+                  { to: "/favorites", label: "Favoritos", Icon: HeartLucide, color: "text-rose-600 bg-rose-50 dark:bg-rose-900/30 dark:text-rose-400", badge: favorites.length },
+                  ...(currentUser?.role === "Admin" ? [
+                    { to: "/admin", label: "Panel admin", Icon: ShieldCheck, color: "text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-400" },
+                  ] : []),
+                ].map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMenuOpen(false)}
+                    className="group flex items-center justify-between px-2.5 py-2.5 rounded-2xl text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${item.color}`}>
+                        <item.Icon size={15} strokeWidth={2.25} />
+                      </span>
+                      <span className="font-semibold">{item.label}</span>
+                    </span>
+                    {item.badge > 0 && (
+                      <span className="bg-red-500 text-white text-[11px] min-w-[18px] text-center px-1.5 py-0.5 rounded-full font-bold">{item.badge}</span>
+                    )}
+                  </Link>
+                ))}
+
+                {currentUser && (
+                  <button
+                    onClick={() => { logout(); setMenuOpen(false); }}
+                    className="flex items-center gap-3 px-2.5 py-2.5 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <span className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/30 text-red-500">
+                      <LogOut size={15} strokeWidth={2.25} />
+                    </span>
+                    Cerrar sesión
+                  </button>
+                )}
+
+                <Link
+                  to="/publish"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-1.5 flex items-center justify-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-3 rounded-2xl font-bold text-sm shadow-md hover:opacity-90 transition"
+                >
+                  <Plus size={16} strokeWidth={2.5} /> Publicar propiedad
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
