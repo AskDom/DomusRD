@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Navbar from "../components/Navbar";
@@ -9,6 +9,7 @@ import Footer from "../components/Footer";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
 import PropertyCard from "../components/PropertyCard";
 import { useProperties } from "../context/PropertiesContext";
+import { useAuth } from "../context/AuthContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useToast } from "../context/ToastContext";
 
@@ -30,6 +31,13 @@ function createPriceIcon(price, status, isActive) {
     html: `<div style="background:${bg};color:white;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid white;transform:${isActive ? "scale(1.12)" : "scale(1)"};transition:all 0.2s">${formatted}</div><div style="width:8px;height:8px;background:${bg};margin:-1px auto 0;clip-path:polygon(0 0,100% 0,50% 100%)"></div>`,
     iconSize: [72, 36], iconAnchor: [36, 36], popupAnchor: [0, -38],
   });
+}
+
+// Sin sesión no mostramos el pin exacto (mismo criterio que SearchResults) —
+// redondeamos a una cuadrícula de ~1km y dibujamos una zona en vez de un punto.
+function approxZoneCenter(lat, lng) {
+  const round = (n) => Math.round(n * 100) / 100;
+  return [round(lat), round(lng)];
 }
 
 // Ajusta el mapa a los bounds de las propiedades
@@ -111,6 +119,7 @@ export default function Home() {
   const navigate      = useNavigate();
   const [searchParams] = useSearchParams();
   const { allProperties, toggleFavorite, isFavorite, loading: propertiesLoading, pagination, fetchProperties, loadMore } = useProperties();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
 
   const activeTab = searchParams.get("tab") || "Todos";
@@ -470,16 +479,8 @@ export default function Home() {
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
                 <MapFit properties={filtered.filter(p => p.lat && p.lng)} />
-                {filtered.filter(p => p.lat && p.lng).map((prop) => (
-                  <Marker
-                    key={prop.id}
-                    position={[prop.lat, prop.lng]}
-                    icon={createPriceIcon(prop.price, prop.status, activePin === prop.id)}
-                    eventHandlers={{
-                      mouseover: () => setActivePin(prop.id),
-                      mouseout:  () => setActivePin(null),
-                    }}
-                  >
+                {filtered.filter(p => p.lat && p.lng).map((prop) => {
+                  const popup = (
                     <Popup>
                       <div className="text-sm min-w-[180px]">
                         {prop.image && (
@@ -507,10 +508,47 @@ export default function Home() {
                           className="block mt-2.5 bg-gray-900 text-white text-center py-2 rounded-xl text-xs font-bold hover:bg-gray-700 transition">
                           Ver detalles →
                         </a>
+                        {!currentUser && (
+                          <p className="text-[11px] text-gray-400 mt-2">
+                            Zona aproximada — inicia sesión para ver la ubicación exacta.
+                          </p>
+                        )}
                       </div>
                     </Popup>
-                  </Marker>
-                ))}
+                  );
+
+                  return currentUser ? (
+                    <Marker
+                      key={prop.id}
+                      position={[prop.lat, prop.lng]}
+                      icon={createPriceIcon(prop.price, prop.status, activePin === prop.id)}
+                      eventHandlers={{
+                        mouseover: () => setActivePin(prop.id),
+                        mouseout:  () => setActivePin(null),
+                      }}
+                    >
+                      {popup}
+                    </Marker>
+                  ) : (
+                    <Circle
+                      key={prop.id}
+                      center={approxZoneCenter(prop.lat, prop.lng)}
+                      radius={900}
+                      pathOptions={{ color: "#1a56db", weight: 1, fillColor: "#1a56db", fillOpacity: 0.15 }}
+                      eventHandlers={{
+                        mouseover: () => setActivePin(prop.id),
+                        mouseout:  () => setActivePin(null),
+                      }}
+                    >
+                      <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent>
+                        <span className="font-bold">
+                          ${prop.price >= 1000000 ? `${(prop.price / 1000000).toFixed(1)}M` : Math.round(prop.price / 1000) + "K"}
+                        </span>
+                      </Tooltip>
+                      {popup}
+                    </Circle>
+                  );
+                })}
               </MapContainer>
             )}
           </motion.div>

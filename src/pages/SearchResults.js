@@ -380,7 +380,7 @@ export default function SearchResults() {
                   <Popup>
                     <PropertyPopupContent prop={prop} />
                     <p className="text-[11px] text-gray-400 mt-2">
-                      🔒 Zona aproximada — inicia sesión para ver la ubicación exacta.
+                      Zona aproximada — inicia sesión para ver la ubicación exacta.
                     </p>
                   </Popup>
                 </Circle>

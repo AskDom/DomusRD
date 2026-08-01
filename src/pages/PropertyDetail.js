@@ -426,12 +426,12 @@ export default function PropertyDetail() {
                   >
                     <div className="absolute inset-0 dark:bg-gray-800" />
                     <div className="relative z-10">
-                      <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-2xl mx-auto mb-3">
-                        🔒
+                      <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center mx-auto mb-3">
+                        <MapPin size={22} strokeWidth={2.25} className="text-blue-600" />
                       </div>
-                      <p className="font-bold text-gray-900 dark:text-white">Ubicación exacta bloqueada</p>
+                      <p className="font-bold text-gray-900 dark:text-white">Zona aproximada</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">
-                        Inicia sesión para ver el mapa con la dirección precisa de esta propiedad.
+                        Inicia sesión para ver la ubicación exacta de esta propiedad.
                       </p>
                       <button
                         onClick={() => setAuthOpen(true)}
