@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import Navbar from "../components/Navbar";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -41,6 +42,7 @@ function StatCard({ label, value, sub, color = "blue" }) {
 
 export default function Admin() {
   const { currentUser, getToken } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [tab,        setTab]        = useState("stats");
@@ -50,6 +52,8 @@ export default function Admin() {
   const [search,     setSearch]     = useState("");
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState("");
+  const [busyId,     setBusyId]     = useState(null);  // `${accion}-${id}` en vuelo
+  const [confirmId,  setConfirmId]  = useState(null);  // `${tipo}-${id}` pendiente de confirmar borrado
 
   // Redirigir si no es ADMIN
   useEffect(() => {
@@ -106,39 +110,86 @@ export default function Admin() {
 
   // ── ACCIONES ─────────────────────────────────────────────────────────────
   const changeRole = async (userId, role) => {
-    const res = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
-      method: "PATCH",
-      headers: authHeaders(),
-      body: JSON.stringify({ role }),
-    });
-    if (res.ok) fetchUsers();
+    setBusyId(`role-${userId}`);
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) { fetchUsers(); toast({ message: "Rol actualizado.", type: "success" }); }
+      else toast({ message: data.error || "No se pudo actualizar el rol.", type: "error" });
+    } catch {
+      toast({ message: "No se pudo conectar con el servidor.", type: "error" });
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const removeUser = async (userId) => {
-    if (!window.confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return;
-    const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
-      method: "DELETE", headers: authHeaders(),
-    });
-    if (res.ok) setUsers((prev) => prev.filter((u) => u.id !== userId));
+    if (confirmId !== `user-${userId}`) { setConfirmId(`user-${userId}`); return; }
+    setConfirmId(null);
+    setBusyId(`user-delete-${userId}`);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+        method: "DELETE", headers: authHeaders(),
+      });
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        toast({ message: "Usuario eliminado.", type: "success" });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ message: data.error || "No se pudo eliminar el usuario.", type: "error" });
+      }
+    } catch {
+      toast({ message: "No se pudo conectar con el servidor.", type: "error" });
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const toggleVerify = async (propId, current) => {
-    const res = await fetch(`${API_URL}/api/admin/properties/${propId}/verify`, {
-      method: "PATCH",
-      headers: authHeaders(),
-      body: JSON.stringify({ verified: !current }),
-    });
-    if (res.ok) setProperties((prev) =>
-      prev.map((p) => p.id === propId ? { ...p, verified: !current } : p)
-    );
+    setBusyId(`verify-${propId}`);
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/properties/${propId}/verify`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ verified: !current }),
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.map((p) => p.id === propId ? { ...p, verified: !current } : p));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ message: data.error || "No se pudo actualizar la verificación.", type: "error" });
+      }
+    } catch {
+      toast({ message: "No se pudo conectar con el servidor.", type: "error" });
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const removeProperty = async (propId) => {
-    if (!window.confirm("¿Eliminar esta propiedad? Esta acción no se puede deshacer.")) return;
-    const res = await fetch(`${API_URL}/api/admin/properties/${propId}`, {
-      method: "DELETE", headers: authHeaders(),
-    });
-    if (res.ok) setProperties((prev) => prev.filter((p) => p.id !== propId));
+    if (confirmId !== `prop-${propId}`) { setConfirmId(`prop-${propId}`); return; }
+    setConfirmId(null);
+    setBusyId(`prop-delete-${propId}`);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/properties/${propId}`, {
+        method: "DELETE", headers: authHeaders(),
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.filter((p) => p.id !== propId));
+        toast({ message: "Propiedad eliminada.", type: "success" });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ message: data.error || "No se pudo eliminar la propiedad.", type: "error" });
+      }
+    } catch {
+      toast({ message: "No se pudo conectar con el servidor.", type: "error" });
+    } finally {
+      setBusyId(null);
+    }
   };
 
   if (!currentUser || currentUser.role !== "Admin") return null;
@@ -161,7 +212,7 @@ export default function Admin() {
         {tabs.map((t) => (
           <button
             key={t}
-            onClick={() => { setTab(t); setSearch(""); }}
+            onClick={() => { setTab(t); setSearch(""); setConfirmId(null); }}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
               tab === t
                 ? "border-blue-600 text-blue-600"
@@ -209,7 +260,7 @@ export default function Admin() {
                     <div key={r.role} className="flex items-center gap-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[r.role]}`}>{r.role}</span>
                       <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(r.count / stats.totalUsers) * 100}%` }}/>
+                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${stats.totalUsers ? (r.count / stats.totalUsers) * 100 : 0}%` }}/>
                       </div>
                       <span className="text-sm font-bold text-gray-700 dark:text-gray-200 w-6 text-right">{r.count}</span>
                     </div>
@@ -224,7 +275,7 @@ export default function Admin() {
                     <div key={t.type} className="flex items-center gap-3">
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 w-28 text-center">{t.type}</span>
                       <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(t.count / stats.totalProperties) * 100}%` }}/>
+                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${stats.totalProperties ? (t.count / stats.totalProperties) * 100 : 0}%` }}/>
                       </div>
                       <span className="text-sm font-bold text-gray-700 dark:text-gray-200 w-6 text-right">{t.count}</span>
                     </div>
@@ -263,8 +314,9 @@ export default function Admin() {
                       <td className="px-4 py-3">
                         <select
                           value={u.role}
+                          disabled={busyId === `role-${u.id}`}
                           onChange={(e) => changeRole(u.id, e.target.value)}
-                          className={`text-xs font-semibold px-2 py-1 rounded-full border-0 cursor-pointer ${ROLE_COLORS[u.role]}`}
+                          className={`text-xs font-semibold px-2 py-1 rounded-full border-0 cursor-pointer disabled:opacity-50 ${ROLE_COLORS[u.role]}`}
                         >
                           {["CLIENTE", "VENDEDOR", "AGENTE", "ADMIN"].map((r) => (
                             <option key={r} value={r} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">{r}</option>
@@ -273,13 +325,32 @@ export default function Admin() {
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{u._count?.properties ?? 0}</td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => removeUser(u.id)}
-                          disabled={u.id === currentUser.id}
-                          className="text-red-500 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium transition"
-                        >
-                          Eliminar
-                        </button>
+                        {confirmId === `user-${u.id}` ? (
+                          <span className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-red-500 text-xs">¿Seguro?</span>
+                            <button
+                              onClick={() => removeUser(u.id)}
+                              disabled={busyId === `user-delete-${u.id}`}
+                              className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 px-2 py-1 rounded-lg transition"
+                            >
+                              {busyId === `user-delete-${u.id}` ? "..." : "Sí, eliminar"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmId(null)}
+                              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+                            >
+                              Cancelar
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => removeUser(u.id)}
+                            disabled={u.id === currentUser.id}
+                            className="text-red-500 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium transition"
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -327,22 +398,42 @@ export default function Admin() {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => toggleVerify(p.id, p.verified)}
-                          className={`text-xs font-semibold px-3 py-1 rounded-full transition ${
+                          disabled={busyId === `verify-${p.id}`}
+                          className={`text-xs font-semibold px-3 py-1 rounded-full transition disabled:opacity-50 ${
                             p.verified
                               ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300"
                               : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-300"
                           }`}
                         >
-                          {p.verified ? "✓ Verificada" : "Pendiente"}
+                          {busyId === `verify-${p.id}` ? "..." : p.verified ? "✓ Verificada" : "Pendiente"}
                         </button>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => removeProperty(p.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-medium transition"
-                        >
-                          Eliminar
-                        </button>
+                        {confirmId === `prop-${p.id}` ? (
+                          <span className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-red-500 text-xs">¿Seguro?</span>
+                            <button
+                              onClick={() => removeProperty(p.id)}
+                              disabled={busyId === `prop-delete-${p.id}`}
+                              className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 px-2 py-1 rounded-lg transition"
+                            >
+                              {busyId === `prop-delete-${p.id}` ? "..." : "Sí, eliminar"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmId(null)}
+                              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+                            >
+                              Cancelar
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => removeProperty(p.id)}
+                            className="text-red-500 hover:text-red-700 text-xs font-medium transition"
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
