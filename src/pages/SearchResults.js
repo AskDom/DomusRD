@@ -196,12 +196,12 @@ export default function SearchResults() {
           <Search size={16} strokeWidth={2.25} className="text-gray-400 flex-shrink-0" />
           <input
             type="text"
-            defaultValue={query}
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
+            value={query}
+            onChange={(e) => {
               const next = new URLSearchParams(searchParams);
-              next.set("q", e.target.value);
-              setSearchParams(next);
+              if (e.target.value) next.set("q", e.target.value);
+              else next.delete("q");
+              setSearchParams(next, { replace: true });
             }}
             placeholder="Buscar ciudad, sector..."
             className="bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 w-full"
