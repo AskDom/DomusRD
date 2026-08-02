@@ -37,6 +37,7 @@ export default function Inbox() {
   const [replyText,   setReplyText]   = useState("");
   const [sending,     setSending]     = useState(false);
   const [search,      setSearch]      = useState("");
+  const [confirmDeleteConv, setConfirmDeleteConv] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
@@ -50,6 +51,7 @@ export default function Inbox() {
 
   // Marcar como leídos al abrir conversación
   useEffect(() => {
+    setConfirmDeleteConv(false);
     if (!selectedConv || !currentUser) return;
     selectedConv.messages
       .filter((m) => m.toId === currentUser.id && !m.read)
@@ -252,21 +254,37 @@ export default function Inbox() {
                     {selectedConv.propertyTitle}
                   </Link>
                 </div>
-                <button
-                  onClick={() => {
-                    if (window.confirm("¿Eliminar esta conversación?")) {
-                      selectedConv.messages.forEach((m) => {
-                        if (m.toId === currentUser.id) deleteMessage(m.id);
-                      });
-                      setSelectedKey(null);
-                    }
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400 hover:text-red-500"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
+                {confirmDeleteConv ? (
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="text-red-500 text-xs font-medium hidden sm:inline">¿Eliminar?</span>
+                    <button
+                      onClick={() => {
+                        selectedConv.messages.forEach((m) => {
+                          if (m.toId === currentUser.id) deleteMessage(m.id);
+                        });
+                        setSelectedKey(null);
+                      }}
+                      className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1.5 rounded-lg transition"
+                    >
+                      Sí
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteConv(false)}
+                      className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-2 py-1.5 rounded-lg transition"
+                    >
+                      No
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteConv(true)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400 hover:text-red-500"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                )}
               </div>
 
               {/* Mensajes */}
