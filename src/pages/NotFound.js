@@ -15,13 +15,15 @@ const FLOATING_HOUSES = Array.from({ length: 8 }, (_, i) => ({
 export default function NotFound() {
   const navigate = useNavigate();
   const [count, setCount] = useState(5);
+  const [cancelled, setCancelled] = useState(false);
 
   // Countdown para redirigir automáticamente
   useEffect(() => {
+    if (cancelled) return;
     if (count <= 0) { navigate("/"); return; }
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, navigate]);
+  }, [count, cancelled, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
@@ -140,36 +142,42 @@ export default function NotFound() {
         </motion.div>
 
         {/* Countdown */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="flex flex-col items-center gap-3"
-        >
-          <p className="text-blue-300/70 text-sm">
-            Redirigiendo al inicio en{" "}
-            <motion.span
-              key={count}
-              initial={{ scale: 1.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="font-black text-white"
-            >
-              {count}
-            </motion.span>
-            {" "}segundos
-          </p>
+        {!cancelled && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col items-center gap-3"
+          >
+            <p className="text-blue-300/70 text-sm">
+              Redirigiendo al inicio en{" "}
+              <motion.span
+                key={count}
+                initial={{ scale: 1.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="font-black text-white"
+              >
+                {count}
+              </motion.span>
+              {" "}segundos ·{" "}
+              <button onClick={() => setCancelled(true)} className="underline hover:text-white transition">
+                quedarme aquí
+              </button>
+            </p>
 
-          {/* Barra de progreso */}
-          <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg, #60a5fa, #34d399)" }}
-              initial={{ width: "100%" }}
-              animate={{ width: "0%" }}
-              transition={{ duration: 5, ease: "linear" }}
-            />
-          </div>
-        </motion.div>
+            {/* Barra de progreso */}
+            <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, #60a5fa, #34d399)" }}
+                initial={{ width: "100%" }}
+                animate={{ width: "0%" }}
+                transition={{ duration: 5, ease: "linear" }}
+              />
+            </div>
+          </motion.div>
+        )}
 
       </div>
     </div>
