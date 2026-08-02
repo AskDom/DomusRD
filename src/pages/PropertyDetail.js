@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bed, Bath, Car, MapPin } from "lucide-react";
+import { Bed, Bath, Car, MapPin, Heart } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import AuthModal from "../components/AuthModal";
@@ -73,9 +73,11 @@ export default function PropertyDetail() {
     ? property.publishedBy.avatar
     : null;
 
-  const similar = allProperties
-    .filter((p) => p.id !== property.id && (p.type === property.type || p.city === property.city))
-    .slice(0, 4);
+  const similar = property
+    ? allProperties
+        .filter((p) => p.id !== property.id && (p.type === property.type || p.city === property.city))
+        .slice(0, 4)
+    : [];
 
   const [lightbox, setLightbox] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -128,7 +130,7 @@ export default function PropertyDetail() {
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col items-center justify-center text-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center text-center px-4">
         <p className="text-6xl mb-4">🏚️</p>
         <p className="text-2xl font-black text-gray-900 dark:text-white mb-2">Propiedad no encontrada</p>
         <p className="text-gray-500 dark:text-gray-400 mb-6">Esta propiedad no existe o fue eliminada.</p>
@@ -144,7 +146,7 @@ export default function PropertyDetail() {
     : [property.image, ...(extraImages[property.type] || [])];
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300 pb-16 lg:pb-0">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300 pb-16 lg:pb-0">
       <Navbar />
 
       {/* ── BARRA FLOTANTE — precio + WhatsApp, aparece al pasar la galería ──
@@ -262,9 +264,14 @@ export default function PropertyDetail() {
                 type: isFavorite(property.id) ? "info" : "success",
               });
             }}
-            className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-lg"
+            className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
           >
-            {isFavorite(property.id) ? "❤️" : "🤍"}
+            <Heart
+              size={17}
+              strokeWidth={2.25}
+              fill={isFavorite(property.id) ? "currentColor" : "none"}
+              className={isFavorite(property.id) ? "text-red-500" : "text-gray-500 dark:text-gray-300"}
+            />
           </button>
         </div>
 

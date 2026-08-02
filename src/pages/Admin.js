@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/Navbar";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -147,6 +148,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <Navbar />
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-4">
         <button onClick={() => navigate("/")} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition text-xl">←</button>
@@ -243,6 +245,7 @@ export default function Admin() {
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
@@ -283,6 +286,7 @@ export default function Admin() {
                 </tbody>
               </table>
             </div>
+            </div>
           </div>
         )}
 
@@ -296,6 +300,7 @@ export default function Admin() {
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
@@ -343,6 +348,7 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           </div>
         )}

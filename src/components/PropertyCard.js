@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bed, Bath, Car, MapPin } from "lucide-react";
+import { Bed, Bath, Car, MapPin, Heart } from "lucide-react";
 import PropertyImage from "./PropertyImage";
 import VerifiedBadge from "./VerifiedBadge";
 
@@ -67,10 +67,15 @@ export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavori
                   type: isFavorite(prop.id) ? "info" : "success",
                 });
               }}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-lg text-sm"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
               style={{ background: "rgba(255,255,255,0.95)" }}
             >
-              {isFavorite(prop.id) ? "❤️" : "🤍"}
+              <Heart
+                size={15}
+                strokeWidth={2.25}
+                fill={isFavorite(prop.id) ? "currentColor" : "none"}
+                className={isFavorite(prop.id) ? "text-red-500" : "text-gray-400"}
+              />
             </motion.button>
 
             {/* Precio flotante */}

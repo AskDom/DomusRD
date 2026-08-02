@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { Search } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
@@ -107,7 +108,6 @@ const HERO_SLIDES = [
 const MAX_HISTORY = 6;
 
 export default function Home() {
-  const [loading,       setLoading]       = useState(true);
   const [query,         setQuery]         = useState("");
   const [sort,          setSort]          = useState("recent");
   const [showHistory,   setShowHistory]   = useState(false);
@@ -137,14 +137,6 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  useEffect(() => {
-    if (!propertiesLoading) setLoading(false);
-    else {
-      const t = setTimeout(() => setLoading(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [propertiesLoading]);
-
   const saveToHistory = (term) => {
     if (!term.trim()) return;
     setSearchHistory((prev) => {
@@ -168,7 +160,7 @@ export default function Home() {
   const slide = HERO_SLIDES[heroIndex];
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* ════════════════════════════════════════════════════════════
@@ -254,7 +246,7 @@ export default function Home() {
             className="w-full max-w-2xl relative"
           >
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-2 flex gap-2 border border-white/20">
-              <span className="flex items-center pl-3 text-gray-400 text-lg">🔍</span>
+              <span className="flex items-center pl-3 text-gray-400"><Search size={18} strokeWidth={2.25} /></span>
               <input
                 type="text"
                 value={query}
@@ -368,7 +360,7 @@ export default function Home() {
               {activeTab === "Todos" ? "Propiedades destacadas" : activeTab}
             </h2>
             <p className="text-gray-400 text-sm mt-0.5">
-              {loading ? "Cargando..." : `${pagination.total || filtered.length} propiedades disponibles`}
+              {propertiesLoading ? "Cargando..." : `${pagination.total || filtered.length} propiedades disponibles`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -429,7 +421,7 @@ export default function Home() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
           >
-            {loading ? (
+            {propertiesLoading ? (
               [...Array(8)].map((_, i) => <PropertyCardSkeleton key={i} />)
             ) : filtered.length === 0 ? (
               <motion.div
@@ -466,7 +458,7 @@ export default function Home() {
             className="rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md"
             style={{ height: 620 }}
           >
-            {loading ? (
+            {propertiesLoading ? (
               <div className="w-full h-full bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
                 <p className="text-gray-400 text-sm">Cargando mapa...</p>
               </div>

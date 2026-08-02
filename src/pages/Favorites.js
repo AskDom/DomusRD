@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
@@ -88,11 +89,11 @@ function PropertyCard({ prop, index, onRemove }) {
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.preventDefault(); onRemove(prop.id); }}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-lg text-sm"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
               style={{ background: "rgba(255,255,255,0.95)" }}
               title="Quitar de favoritos"
             >
-              ❤️
+              <Heart size={15} strokeWidth={2.25} fill="currentColor" className="text-red-500" />
             </motion.button>
 
             {/* Precio flotante */}

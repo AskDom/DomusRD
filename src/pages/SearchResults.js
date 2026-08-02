@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
-import { Bed, Bath, Car, MapPin } from "lucide-react";
+import { Bed, Bath, Car, MapPin, Heart, Search } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
@@ -187,13 +187,13 @@ export default function SearchResults() {
   const selectClass = "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-4 py-2 text-sm outline-none border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 transition-colors";
 
   return (
-    <div className="min-h-screen bg-gray-200 dark:bg-gray-900 transition-colors duration-300 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300 flex flex-col">
       <Navbar />
 
       {/* BARRA BÚSQUEDA + FILTROS */}
       <div className="bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700 px-4 py-3 flex flex-wrap items-center gap-3 z-40 shadow-sm">
         <div className="flex items-center bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 gap-2 flex-1 min-w-[200px] max-w-sm">
-          <span className="text-gray-400">🔍</span>
+          <Search size={16} strokeWidth={2.25} className="text-gray-400 flex-shrink-0" />
           <input
             type="text"
             defaultValue={query}
@@ -312,9 +312,14 @@ export default function SearchResults() {
                         </div>
                         <button
                           onClick={(e) => { e.preventDefault(); toggleFavorite(prop.id); }}
-                          className="absolute top-2 right-2 bg-white dark:bg-gray-800 w-7 h-7 rounded-full flex items-center justify-center shadow text-xs hover:scale-110 transition-transform"
+                          className="absolute top-2 right-2 bg-white dark:bg-gray-800 w-7 h-7 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform"
                         >
-                          {isFavorite(prop.id) ? "❤️" : "🤍"}
+                          <Heart
+                            size={13}
+                            strokeWidth={2.25}
+                            fill={isFavorite(prop.id) ? "currentColor" : "none"}
+                            className={isFavorite(prop.id) ? "text-red-500" : "text-gray-400"}
+                          />
                         </button>
                       </div>
                       <div className="p-3">

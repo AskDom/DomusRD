@@ -56,7 +56,7 @@ export default function AgentProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <Navbar />
         <div className="max-w-5xl mx-auto px-4 py-16 text-center text-gray-400">Cargando perfil...</div>
       </div>
@@ -65,7 +65,7 @@ export default function AgentProfile() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <p className="text-6xl mb-4">🏚️</p>
@@ -85,7 +85,7 @@ export default function AgentProfile() {
   const normalized = properties.map(normalizeProperty);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
 
       <motion.div
