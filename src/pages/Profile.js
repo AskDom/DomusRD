@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ShieldCheck, Star, Home as HomeIcon, User as UserIcon, Plus, Loader2, X, MoreVertical, Eye, Pencil, CheckCircle2, Flag, Undo2, Trash2 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
@@ -10,10 +11,10 @@ import { useToast } from "../context/ToastContext";
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const ROLE_CONFIG = {
-  Admin:    { label: "🛡️ Admin",    bg: "from-purple-500 to-purple-600" },
-  Agente:   { label: "⭐ Agente",   bg: "from-amber-500 to-orange-500"  },
-  Vendedor: { label: "🏠 Vendedor", bg: "from-green-500 to-emerald-600" },
-  Cliente:  { label: "👤 Cliente",  bg: "from-blue-500 to-blue-600"     },
+  Admin:    { label: "Admin",    Icon: ShieldCheck, bg: "from-purple-500 to-purple-600" },
+  Agente:   { label: "Agente",   Icon: Star,        bg: "from-amber-500 to-orange-500"  },
+  Vendedor: { label: "Vendedor", Icon: HomeIcon,    bg: "from-green-500 to-emerald-600" },
+  Cliente:  { label: "Cliente",  Icon: UserIcon,    bg: "from-blue-500 to-blue-600"     },
 };
 
 function StatCard({ value, label, color = "text-gray-900 dark:text-white" }) {
@@ -125,7 +126,7 @@ function PropertyCard({ prop, onEdit, onDelete, onVerify, onStatusChange, confir
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
-                ···
+                <MoreVertical size={16} strokeWidth={2.25} />
               </button>
               <AnimatePresence>
                 {menuOpen && (
@@ -137,36 +138,36 @@ function PropertyCard({ prop, onEdit, onDelete, onVerify, onStatusChange, confir
                   >
                     <Link to={`/property/${prop.id}`} onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                      <span>👁️</span> Ver propiedad
+                      <Eye size={15} strokeWidth={2.25} /> Ver propiedad
                     </Link>
                     <button onClick={() => { onEdit(prop); setMenuOpen(false); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                      <span>✏️</span> Editar
+                      <Pencil size={15} strokeWidth={2.25} /> Editar
                     </button>
                     {!prop.verified && (
                       <button onClick={() => { onVerify(prop.id); setMenuOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition">
-                        <span>✅</span> Verificar
+                        <CheckCircle2 size={15} strokeWidth={2.25} /> Verificar
                       </button>
                     )}
                     {(prop.status === "Venta" || prop.status === "Vendido") && (
                       <button onClick={() => { onStatusChange(prop.id, prop.status === "Venta" ? "Vendido" : "Venta"); setMenuOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <span>{prop.status === "Venta" ? "🏁" : "↩"}</span>
+                        {prop.status === "Venta" ? <Flag size={15} strokeWidth={2.25} /> : <Undo2 size={15} strokeWidth={2.25} />}
                         {prop.status === "Venta" ? "Marcar vendido" : "Volver a venta"}
                       </button>
                     )}
                     {(prop.status === "Renta" || prop.status === "Rentado") && (
                       <button onClick={() => { onStatusChange(prop.id, prop.status === "Renta" ? "Rentado" : "Renta"); setMenuOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <span>{prop.status === "Renta" ? "🏁" : "↩"}</span>
+                        {prop.status === "Renta" ? <Flag size={15} strokeWidth={2.25} /> : <Undo2 size={15} strokeWidth={2.25} />}
                         {prop.status === "Renta" ? "Marcar rentado" : "Volver a renta"}
                       </button>
                     )}
                     <div className="border-t border-gray-100 dark:border-gray-700"/>
                     <button onClick={() => { setConfirmDelete(prop.id); setMenuOpen(false); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                      <span>🗑️</span> Eliminar
+                      <Trash2 size={15} strokeWidth={2.25} /> Eliminar
                     </button>
                   </motion.div>
                 )}
@@ -245,12 +246,14 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
                   <img src={url} alt="" className="w-full h-full object-cover rounded-xl"/>
                   {i === 0 && <span className="absolute bottom-0 inset-x-0 text-center text-white text-[9px] font-bold bg-black/50 rounded-b-xl py-0.5">portada</span>}
                   <button onClick={() => onRemoveImage(i)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition flex items-center justify-center">×</button>
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <X size={11} strokeWidth={3} />
+                  </button>
                 </div>
               ))}
               {(editForm.images || []).length < 6 && (
-                <label className="w-20 h-20 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition text-gray-400 text-xs">
-                  {uploadingEdit ? "⏳" : "+"}
+                <label className="w-20 h-20 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition text-gray-400">
+                  {uploadingEdit ? <Loader2 size={18} strokeWidth={2} className="animate-spin" /> : <Plus size={18} strokeWidth={2} />}
                   <input type="file" accept="image/*" multiple className="hidden" onChange={onImageUpload} disabled={uploadingEdit}/>
                 </label>
               )}
@@ -449,8 +452,8 @@ export default function Profile() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-black text-gray-900 dark:text-white">{currentUser.name}</h1>
-                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r ${roleConfig.bg}`}>
-                  {roleConfig.label}
+                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r ${roleConfig.bg}`}>
+                  <roleConfig.Icon size={11} strokeWidth={2.5} /> {roleConfig.label}
                 </span>
               </div>
               <p className="text-gray-400 text-sm mt-1">{currentUser.email}</p>
@@ -611,10 +614,10 @@ export default function Profile() {
                       </Link>
                       <button
                         onClick={() => deleteSavedSearch(s.id)}
-                        className="text-gray-300 hover:text-red-500 transition text-lg"
+                        className="text-gray-300 hover:text-red-500 transition"
                         title="Eliminar"
                       >
-                        ×
+                        <X size={16} strokeWidth={2.25} />
                       </button>
                     </div>
                   ))}

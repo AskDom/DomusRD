@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { Plus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -353,7 +354,9 @@ export default function Publish() {
                     ? "border-gray-400 bg-gray-50 dark:bg-gray-800"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 }`}>
-                  <p className="text-3xl mb-2">{uploading ? "⏳" : "+"}</p>
+                  <p className="flex justify-center mb-2 text-gray-400">
+                    {uploading ? <Loader2 size={26} strokeWidth={2} className="animate-spin" /> : <Plus size={26} strokeWidth={2} />}
+                  </p>
                   <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                     {uploading ? "Subiendo..." : "Agregar fotos"}
                   </p>

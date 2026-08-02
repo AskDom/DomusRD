@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
@@ -293,8 +293,8 @@ export default function Home() {
                       </div>
                       <button
                         onMouseDown={(e) => { e.stopPropagation(); setSearchHistory((p) => p.filter((h) => h !== term)); }}
-                        className="text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition text-lg"
-                      >×</button>
+                        className="text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition"
+                      ><X size={14} strokeWidth={2.25} /></button>
                     </div>
                   ))}
                 </motion.div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Star } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-function StarRating({ value, onChange, readOnly = false, size = "text-2xl" }) {
+function StarRating({ value, onChange, readOnly = false, size = 24 }) {
   const [hovered, setHovered] = useState(0);
   return (
     <div className="flex gap-0.5">
@@ -15,14 +16,15 @@ function StarRating({ value, onChange, readOnly = false, size = "text-2xl" }) {
           onClick={() => !readOnly && onChange?.(star)}
           onMouseEnter={() => !readOnly && setHovered(star)}
           onMouseLeave={() => !readOnly && setHovered(0)}
-          className={`${size} transition-transform ${!readOnly ? "hover:scale-110 cursor-pointer" : "cursor-default"}`}
+          className={`transition-transform ${!readOnly ? "hover:scale-110 cursor-pointer" : "cursor-default"}`}
           aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
         >
-          <span className={
-            star <= (hovered || value)
-              ? "text-amber-400"
-              : "text-gray-300 dark:text-gray-600"
-          }>★</span>
+          <Star
+            size={size}
+            strokeWidth={1.75}
+            fill={star <= (hovered || value) ? "currentColor" : "none"}
+            className={star <= (hovered || value) ? "text-amber-400" : "text-gray-300 dark:text-gray-600"}
+          />
         </button>
       ))}
     </div>
@@ -53,7 +55,7 @@ function ReviewCard({ review, isOwn, onDelete }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <StarRating value={review.rating} readOnly size="text-base" />
+          <StarRating value={review.rating} readOnly size={16} />
           {isOwn && (
             <button
               onClick={() => onDelete(review.id)}
@@ -160,14 +162,14 @@ export default function ReviewSection({ propertyId, publishedById }) {
         <div className="flex flex-col sm:flex-row gap-6 mb-8 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700">
           <div className="flex flex-col items-center justify-center min-w-[100px]">
             <p className="text-5xl font-black text-gray-900 dark:text-white">{average}</p>
-            <StarRating value={Math.round(average)} readOnly size="text-xl" />
+            <StarRating value={Math.round(average)} readOnly size={20} />
             <p className="text-xs text-gray-400 mt-1">{total} reseña{total !== 1 ? "s" : ""}</p>
           </div>
           <div className="flex-1 space-y-1.5">
             {distribution.map(({ star, count, pct }) => (
               <div key={star} className="flex items-center gap-2 text-xs">
                 <span className="text-gray-500 w-4 text-right">{star}</span>
-                <span className="text-amber-400 text-sm">★</span>
+                <Star size={13} strokeWidth={1.75} fill="currentColor" className="text-amber-400" />
                 <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                   <div className="bg-amber-400 h-2 rounded-full transition-all" style={{ width: `${pct}%` }}/>
                 </div>
@@ -195,7 +197,7 @@ export default function ReviewSection({ propertyId, publishedById }) {
               </h3>
               <div className="mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Calificación</p>
-                <StarRating value={myRating} onChange={setMyRating} size="text-3xl" />
+                <StarRating value={myRating} onChange={setMyRating} size={30} />
               </div>
               <textarea
                 value={myComment}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ShieldCheck, Star, Home as HomeIcon, User as UserIcon } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
@@ -10,18 +11,24 @@ import { useToast } from "../context/ToastContext";
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const ROLE_CONFIG = {
-  AGENTE:   { label: "⭐ Agente",   bg: "from-amber-500 to-orange-500"  },
-  VENDEDOR: { label: "🏠 Vendedor", bg: "from-green-500 to-emerald-600" },
-  ADMIN:    { label: "🛡️ Admin",    bg: "from-purple-500 to-purple-600" },
-  CLIENTE:  { label: "👤 Cliente",  bg: "from-blue-500 to-blue-600"     },
+  AGENTE:   { label: "Agente",   Icon: Star,        bg: "from-amber-500 to-orange-500"  },
+  VENDEDOR: { label: "Vendedor", Icon: HomeIcon,    bg: "from-green-500 to-emerald-600" },
+  ADMIN:    { label: "Admin",    Icon: ShieldCheck, bg: "from-purple-500 to-purple-600" },
+  CLIENTE:  { label: "Cliente",  Icon: UserIcon,    bg: "from-blue-500 to-blue-600"     },
 };
 
 function Stars({ value }) {
   const rounded = Math.round(value);
   return (
-    <span className="text-amber-400 text-sm tracking-tight">
+    <span className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n}>{n <= rounded ? "★" : "☆"}</span>
+        <Star
+          key={n}
+          size={14}
+          strokeWidth={1.75}
+          fill={n <= rounded ? "currentColor" : "none"}
+          className={n <= rounded ? "text-amber-400" : "text-gray-300 dark:text-gray-600"}
+        />
       ))}
     </span>
   );
@@ -107,8 +114,8 @@ export default function AgentProfile() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
               <h1 className="text-2xl font-black text-gray-900 dark:text-white">{user.name}</h1>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r ${roleConfig.bg}`}>
-                {roleConfig.label}
+              <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r ${roleConfig.bg}`}>
+                <roleConfig.Icon size={11} strokeWidth={2.5} /> {roleConfig.label}
               </span>
             </div>
             <p className="text-gray-400 text-sm mt-1">Miembro desde {memberSince}</p>

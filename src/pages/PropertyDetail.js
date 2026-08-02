@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bed, Bath, Car, MapPin, Heart } from "lucide-react";
+import { Bed, Bath, Car, MapPin, Heart, ChevronLeft, ChevronRight, X, Share2, Check, MessageCircle } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import AuthModal from "../components/AuthModal";
@@ -166,7 +166,7 @@ export default function PropertyDetail() {
           onClick={handleWhatsApp}
           className="ml-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold transition shadow-md flex items-center gap-1.5 whitespace-nowrap"
         >
-          💬 WhatsApp
+          <MessageCircle size={15} strokeWidth={2.25} /> WhatsApp
         </button>
       </div>
 
@@ -189,12 +189,12 @@ export default function PropertyDetail() {
           {/* flechas */}
           <button
             onClick={() => setCurrentSlide((currentSlide - 1 + gallery.length) % gallery.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center text-xl transition backdrop-blur-sm"
-          >‹</button>
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center transition backdrop-blur-sm"
+          ><ChevronLeft size={20} strokeWidth={2.5} /></button>
           <button
             onClick={() => setCurrentSlide((currentSlide + 1) % gallery.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center text-xl transition backdrop-blur-sm"
-          >›</button>
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-9 h-9 rounded-full flex items-center justify-center transition backdrop-blur-sm"
+          ><ChevronRight size={20} strokeWidth={2.5} /></button>
           {/* dots */}
           <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
             {gallery.map((_, i) => (
@@ -252,9 +252,9 @@ export default function PropertyDetail() {
         <div className="absolute top-6 right-6 z-10 flex gap-2">
           <button
             onClick={handleShare}
-            className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-semibold shadow-lg hover:bg-white dark:hover:bg-gray-800 transition"
+            className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-semibold shadow-lg hover:bg-white dark:hover:bg-gray-800 transition flex items-center gap-1.5"
           >
-            {copied ? "✅ Copiado" : "🔗 Compartir"}
+            {copied ? <><Check size={15} strokeWidth={2.5} className="text-green-500" /> Copiado</> : <><Share2 size={15} strokeWidth={2.25} /> Compartir</>}
           </button>
           <button
             onClick={() => {
@@ -287,11 +287,11 @@ export default function PropertyDetail() {
             className="fixed inset-0 bg-black/95 z-[999] flex items-center justify-center p-4"
             onClick={() => setLightbox(null)}
           >
-            <button className="absolute top-5 right-5 text-white/60 hover:text-white text-3xl transition" onClick={() => setLightbox(null)}>✕</button>
+            <button className="absolute top-5 right-5 text-white/60 hover:text-white transition" onClick={() => setLightbox(null)}><X size={30} strokeWidth={2} /></button>
             <button
-              className="absolute left-4 text-white/60 hover:text-white text-5xl px-4 py-2 transition"
+              className="absolute left-4 text-white/60 hover:text-white px-4 py-2 transition"
               onClick={(e) => { e.stopPropagation(); setLightbox((lightbox - 1 + gallery.length) % gallery.length); }}
-            >‹</button>
+            ><ChevronLeft size={44} strokeWidth={1.75} /></button>
             <motion.img
               key={lightbox}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -302,9 +302,9 @@ export default function PropertyDetail() {
               onClick={(e) => e.stopPropagation()}
             />
             <button
-              className="absolute right-4 text-white/60 hover:text-white text-5xl px-4 py-2 transition"
+              className="absolute right-4 text-white/60 hover:text-white px-4 py-2 transition"
               onClick={(e) => { e.stopPropagation(); setLightbox((lightbox + 1) % gallery.length); }}
-            >›</button>
+            ><ChevronRight size={44} strokeWidth={1.75} /></button>
             <p className="absolute bottom-5 text-white/40 text-sm">{lightbox + 1} / {gallery.length}</p>
           </motion.div>
         )}
@@ -537,14 +537,14 @@ export default function PropertyDetail() {
                       onClick={handleWhatsApp}
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-2xl font-bold transition shadow-md flex items-center justify-center gap-2"
                     >
-                      💬 WhatsApp
+                      <MessageCircle size={17} strokeWidth={2.25} /> WhatsApp
                     </button>
                     <button
                       onClick={handleShare}
                       title="Compartir"
-                      className="w-12 shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-2xl transition flex items-center justify-center text-lg"
+                      className="w-12 shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-2xl transition flex items-center justify-center"
                     >
-                      {copied ? "✅" : "🔗"}
+                      {copied ? <Check size={18} strokeWidth={2.5} className="text-green-500" /> : <Share2 size={17} strokeWidth={2.25} />}
                     </button>
                   </div>
                 </div>

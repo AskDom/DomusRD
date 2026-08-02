@@ -1,6 +1,34 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+const XIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/>
+  </svg>
+);
+
+const LinkedInIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" y1="9" x2="6" y2="17"/>
+    <circle cx="6" cy="5.5" r="0.75" fill="currentColor" stroke="none"/>
+    <path d="M11 17v-5.5c0-1.5 1-2.5 2.5-2.5S16 10 16 11.5V17"/>
+  </svg>
+);
+
+const FacebookIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M14.5 8.5h2.2V5.3h-2.2c-2.4 0-4.3 1.9-4.3 4.3v1.9H8v3.2h2.2V21h3.2v-6.3h2.4l.5-3.2h-2.9V9.6c0-.6.5-1.1 1.1-1.1Z"/>
+  </svg>
+);
+
+const InstagramIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="4.5"/>
+    <circle cx="12" cy="12" r="3.6"/>
+    <circle cx="16.8" cy="7.2" r="0.6" fill="currentColor" stroke="none"/>
+  </svg>
+);
+
 const LINKS = {
   Explorar: [
     { label: "Inicio", to: "/" },
@@ -51,10 +79,10 @@ export default function Footer() {
             {/* REDES SOCIALES */}
             <div className="flex gap-3 mt-5">
               {[
-                { icon: "𝕏", href: "https://x.com", label: "X" },
-                { icon: "in", href: "https://linkedin.com", label: "LinkedIn" },
-                { icon: "f", href: "https://facebook.com", label: "Facebook" },
-                { icon: "📸", href: "https://instagram.com", label: "Instagram" },
+                { Icon: XIcon,         href: "https://x.com",         label: "X" },
+                { Icon: LinkedInIcon,  href: "https://linkedin.com",  label: "LinkedIn" },
+                { Icon: FacebookIcon,  href: "https://facebook.com",  label: "Facebook" },
+                { Icon: InstagramIcon, href: "https://instagram.com", label: "Instagram" },
               ].map((social) => (
                 <a
                   key={social.label}
@@ -62,9 +90,9 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white text-gray-600 dark:text-gray-400 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200"
+                  className="bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white text-gray-600 dark:text-gray-400 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
                 >
-                  {social.icon}
+                  <social.Icon />
                 </a>
               ))}
             </div>
