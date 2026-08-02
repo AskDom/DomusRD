@@ -36,7 +36,7 @@ const ROLES = [
 
 export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "Cliente" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
   const [showPass, setShowPass] = useState(false);
   const { login, register, error, setError, loading } = useAuth();
   const { banner } = useToast();
@@ -65,6 +65,10 @@ export default function AuthModal({ isOpen, onClose }) {
         setError("El nombre debe tener al menos 2 caracteres");
         return;
       }
+      if (form.password !== form.confirmPassword) {
+        setError("Las contraseñas no coinciden");
+        return;
+      }
     }
     setError("");
 
@@ -73,7 +77,7 @@ export default function AuthModal({ isOpen, onClose }) {
       : await register({ name: form.name, email: form.email, password: form.password, role: form.role });
     if (user) {
       onClose();
-      setForm({ name: "", email: "", password: "", role: "Cliente" });
+      setForm({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
       const firstName = user.name?.split(" ")[0] || form.name?.split(" ")[0] || "Usuario";
       banner({
         message: isLogin ? `¡Bienvenido de vuelta, ${firstName}! 👋` : `¡Cuenta creada, ${firstName}! 🎉`,
@@ -87,7 +91,7 @@ export default function AuthModal({ isOpen, onClose }) {
   const switchTab = (toLogin) => {
     setIsLogin(toLogin);
     setError("");
-    setForm({ name: "", email: "", password: "", role: "Cliente" });
+    setForm({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
   };
 
   const inputClass = "w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm";
@@ -291,6 +295,20 @@ export default function AuthModal({ isOpen, onClose }) {
                         </button>
                       )}
                     </div>
+
+                    {!isLogin && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 block">Confirmar contraseña</label>
+                        <input
+                          type={showPass ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={form.confirmPassword}
+                          onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
 
                     {/* Selector de rol */}
                     {!isLogin && (
