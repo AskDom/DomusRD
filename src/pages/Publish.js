@@ -234,20 +234,28 @@ export default function Publish() {
                 </Field>
                 <Field label="Precio" error={errors.price}>
                   <div className="flex gap-2">
-                    <select
-                      value={form.currency}
-                      onChange={(e) => set("currency", e.target.value)}
-                      className={`${input} w-28 flex-shrink-0 px-2`}
-                    >
-                      <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD (US$)</option>
-                      <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$ (DOP)</option>
-                    </select>
-                    <input
-                      type="number" placeholder="150,000"
-                      value={form.price}
-                      onChange={(e) => set("price", e.target.value)}
-                      className={`${input} ${errors.price ? "ring-2 ring-red-400 border-red-300" : ""}`}
-                    />
+                    {/* Cada control va en su propio contenedor con el ancho
+                        real (w-28 / flex-1) — la clase "input" ya trae
+                        w-full adentro, así que mezclarla con otro ancho en
+                        el mismo elemento hacía que compitieran entre sí. */}
+                    <div className="w-28 flex-shrink-0">
+                      <select
+                        value={form.currency}
+                        onChange={(e) => set("currency", e.target.value)}
+                        className={`${input} px-2`}
+                      >
+                        <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD (US$)</option>
+                        <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$ (DOP)</option>
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="number" placeholder="150,000"
+                        value={form.price}
+                        onChange={(e) => set("price", e.target.value)}
+                        className={`${input} ${errors.price ? "ring-2 ring-red-400 border-red-300" : ""}`}
+                      />
+                    </div>
                   </div>
                 </Field>
               </div>

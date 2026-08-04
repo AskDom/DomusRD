@@ -214,15 +214,21 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Precio</label>
               <div className="flex gap-2">
-                <select
-                  value={editForm.currency || "USD"}
-                  onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
-                  className={`${inputClass} w-24 flex-shrink-0 px-2`}
-                >
-                  <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD</option>
-                  <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$</option>
-                </select>
-                <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={inputClass}/>
+                {/* inputClass ya trae w-full — cada control va en su propio
+                    contenedor con el ancho real, si no compiten entre sí. */}
+                <div className="w-24 flex-shrink-0">
+                  <select
+                    value={editForm.currency || "USD"}
+                    onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                    className={`${inputClass} px-2`}
+                  >
+                    <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD</option>
+                    <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={inputClass}/>
+                </div>
               </div>
             </div>
             <div>
