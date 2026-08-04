@@ -1,22 +1,21 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-import { useAuth } from "./AuthContext";
+import { useAuth, CSRF_HEADERS } from "./AuthContext";
 
 const API_URL  = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const NotificationsContext = createContext();
 
 export function NotificationsProvider({ children }) {
-  const { currentUser, getToken } = useAuth();
+  const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount,   setUnreadCount]    = useState(0);
   const socketRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
+    if (!currentUser) return;
     try {
       const res  = await fetch(`${API_URL}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -25,17 +24,16 @@ export function NotificationsProvider({ children }) {
     } catch (err) {
       console.error("fetchNotifications error:", err);
     }
-  }, [getToken]);
+  }, [currentUser]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
   // ── WEBSOCKET — reusa el mismo socket autenticado que el inbox ──────────────
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!currentUser) return;
 
     const socket = io(API_URL, {
-      auth: { token },
+      withCredentials: true,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 2000,
@@ -57,12 +55,13 @@ export function NotificationsProvider({ children }) {
     try {
       await fetch(`${API_URL}/api/notifications/${id}/read`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
     } catch (err) {
       console.error("markAsRead (notification) error:", err);
     }
-  }, [getToken]);
+  }, []);
 
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -70,12 +69,13 @@ export function NotificationsProvider({ children }) {
     try {
       await fetch(`${API_URL}/api/notifications/read-all`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
     } catch (err) {
       console.error("markAllAsRead error:", err);
     }
-  }, [getToken]);
+  }, []);
 
   return (
     <NotificationsContext.Provider value={{

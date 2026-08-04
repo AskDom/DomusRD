@@ -13,6 +13,8 @@ import { useProperties } from "../context/PropertiesContext";
 import { useAuth } from "../context/AuthContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useToast } from "../context/ToastContext";
+import { formatPriceShort, toUsdEquivalent } from "../utils/formatPrice";
+import PriceTag from "../components/PriceTag";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -22,10 +24,8 @@ L.Icon.Default.mergeOptions({
 });
 
 // Ícono de precio en el mapa
-function createPriceIcon(price, status, isActive) {
-  const formatted = price >= 1000000
-    ? `$${(price / 1000000).toFixed(1)}M`
-    : price >= 1000 ? `$${Math.round(price / 1000)}K` : `$${price}`;
+function createPriceIcon(price, status, isActive, currency) {
+  const formatted = formatPriceShort(price, currency);
   const bg = isActive ? "#1a56db" : status === "Renta" ? "#059669" : "#111827";
   return L.divIcon({
     className: "",
@@ -78,8 +78,11 @@ const SORT_OPTIONS = [
 
 function sortProperties(props, sort) {
   const arr = [...props];
-  if (sort === "price_asc")  return arr.sort((a, b) => a.price - b.price);
-  if (sort === "price_desc") return arr.sort((a, b) => b.price - a.price);
+  // Comparamos el equivalente en USD, no el número crudo — si no, una
+  // propiedad en RD$5,000,000 se ordenaba como "más cara" que una en
+  // US$95,000 aunque en dólares reales sea al revés.
+  if (sort === "price_asc")  return arr.sort((a, b) => toUsdEquivalent(a.price, a.currency) - toUsdEquivalent(b.price, b.currency));
+  if (sort === "price_desc") return arr.sort((a, b) => toUsdEquivalent(b.price, b.currency) - toUsdEquivalent(a.price, a.currency));
   return arr.sort((a, b) => {
     if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
     return b.id > a.id ? 1 : -1;
@@ -487,7 +490,7 @@ export default function Home() {
                         </div>
                         <p className="font-bold text-gray-900 leading-snug text-sm">{prop.title}</p>
                         <p className="text-blue-600 font-black mt-1">
-                          ${Number(prop.price).toLocaleString()}
+                          <PriceTag price={prop.price} currency={prop.currency} />
                           {prop.status === "Renta" && <span className="text-gray-400 font-normal text-xs">/mes</span>}
                         </p>
                         <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city}</p>
@@ -513,7 +516,7 @@ export default function Home() {
                     <Marker
                       key={prop.id}
                       position={[prop.lat, prop.lng]}
-                      icon={createPriceIcon(prop.price, prop.status, activePin === prop.id)}
+                      icon={createPriceIcon(prop.price, prop.status, activePin === prop.id, prop.currency)}
                       eventHandlers={{
                         mouseover: () => setActivePin(prop.id),
                         mouseout:  () => setActivePin(null),
@@ -534,7 +537,7 @@ export default function Home() {
                     >
                       <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent>
                         <span className="font-bold">
-                          ${prop.price >= 1000000 ? `${(prop.price / 1000000).toFixed(1)}M` : Math.round(prop.price / 1000) + "K"}
+                          {formatPriceShort(prop.price, prop.currency)}
                         </span>
                       </Tooltip>
                       {popup}

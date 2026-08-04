@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Star } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -72,7 +72,7 @@ function ReviewCard({ review, isOwn, onDelete }) {
 }
 
 export default function ReviewSection({ propertyId, publishedById }) {
-  const { currentUser, getToken } = useAuth();
+  const { currentUser } = useAuth();
 
   const [reviews,  setReviews]  = useState([]);
   const [average,  setAverage]  = useState(0);
@@ -119,7 +119,8 @@ export default function ReviewSection({ propertyId, publishedById }) {
     try {
       const res  = await fetch(`${API_URL}/api/reviews/${propertyId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
         body: JSON.stringify({ rating: myRating, comment: myComment }),
       });
       const data = await res.json();
@@ -136,7 +137,8 @@ export default function ReviewSection({ propertyId, publishedById }) {
   const handleDelete = async () => {
     const res = await fetch(`${API_URL}/api/reviews/${propertyId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
+      headers: CSRF_HEADERS,
     });
     if (res.ok) {
       setMyRating(0); setMyComment(""); setSuccess(""); setShowForm(false);

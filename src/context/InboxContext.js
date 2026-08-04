@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
+import { useAuth, CSRF_HEADERS } from "./AuthContext";
 
 const API_URL    = process.env.REACT_APP_API_URL || "http://localhost:5000";
-const getToken   = () => localStorage.getItem("domify-token");
 const InboxContext = createContext();
 
 export function InboxProvider({ children }) {
+  const { currentUser } = useAuth();
   const [messages,       setMessages]       = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [unreadCount,    setUnreadCount]    = useState(0);
@@ -13,12 +14,11 @@ export function InboxProvider({ children }) {
 
   // ── FETCH ──────────────────────────────────────────────────────────────────
   const fetchMessages = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
+    if (!currentUser) return;
     setLoadingMessages(true);
     try {
       const res  = await fetch(`${API_URL}/api/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -43,30 +43,25 @@ export function InboxProvider({ children }) {
     } finally {
       setLoadingMessages(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
   // Calcular no leídos
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    // Extraer userId del token
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const myId    = payload.id || payload.userId;
-      const count   = messages.filter((m) => m.toId === myId && !m.read).length;
-      setUnreadCount(count);
-    } catch {}
-  }, [messages]);
+    if (!currentUser) return;
+    const count = messages.filter((m) => m.toId === currentUser.id && !m.read).length;
+    setUnreadCount(count);
+  }, [messages, currentUser]);
 
   // ── WEBSOCKET ───────────────────────────────────────────────────────────────
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!currentUser) return;
 
+    // El navegador manda la cookie httpOnly sola en el handshake — no hace
+    // falta (ni se puede) leer el token en JS para autenticar el socket.
     const socket = io(API_URL, {
-      auth: { token },
+      withCredentials: true,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 2000,
@@ -102,8 +97,7 @@ export function InboxProvider({ children }) {
 
     socketRef.current = socket;
     return () => { socket.disconnect(); socketRef.current = null; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUser]);
 
   // ── PEDIR PERMISO NOTIFICACIONES ───────────────────────────────────────────
   useEffect(() => {
@@ -114,7 +108,6 @@ export function InboxProvider({ children }) {
 
   // ── ENVIAR ─────────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async ({ fromId, fromName, fromAvatar, toId, toName, toAvatar, propertyId, propertyTitle, text, replyToId = null }) => {
-    const token = getToken();
     const tempMsg = {
       id: `temp-${Date.now()}`,
       fromId, fromName, fromAvatar, toId, toName, toAvatar,
@@ -127,7 +120,8 @@ export function InboxProvider({ children }) {
     try {
       const res  = await fetch(`${API_URL}/api/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
         body: JSON.stringify({ toId, propertyId, text, replyToId }),
       });
       const data = await res.json();
@@ -178,7 +172,8 @@ export function InboxProvider({ children }) {
     try {
       await fetch(`${API_URL}/api/messages/${id}/read`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
     } catch (err) {
       console.error("markAsRead error:", err);
@@ -191,7 +186,8 @@ export function InboxProvider({ children }) {
     try {
       await fetch(`${API_URL}/api/messages/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
     } catch (err) {
       console.error("deleteMessage error:", err);

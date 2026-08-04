@@ -31,8 +31,11 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    trackPageView(location.pathname + location.search);
-  }, [location.pathname, location.search]);
+    // Solo el pathname, nunca location.search: la query string puede llevar
+    // datos sensibles (p. ej. el token de /reset-password?token=...) y no
+    // queremos que viajen a Google Analytics.
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   return (
     <AnimatePresence mode="wait">

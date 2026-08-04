@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
 import VerifiedBadge from "../components/VerifiedBadge";
+import PriceTag from "../components/PriceTag";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useToast } from "../context/ToastContext";
@@ -99,12 +100,12 @@ function PropertyCard({ prop, index, onRemove }) {
             {/* Precio flotante */}
             <div className="absolute bottom-3 left-3">
               <div className="bg-white/95 dark:bg-gray-900/90 backdrop-blur rounded-xl px-3 py-1.5 shadow">
-                <p className="font-black text-gray-900 dark:text-white text-base leading-none">
-                  ${Number(prop.price).toLocaleString()}
+                <p className="font-black text-gray-900 dark:text-white text-base leading-none whitespace-nowrap">
+                  <PriceTag price={prop.price} currency={prop.currency} />
+                  {prop.status === "Renta" && (
+                    <span className="text-gray-400 text-[10px] font-medium ml-1">/mes</span>
+                  )}
                 </p>
-                {prop.status === "Renta" && (
-                  <p className="text-gray-400 text-[10px] font-medium">/mes</p>
-                )}
               </div>
             </div>
           </div>

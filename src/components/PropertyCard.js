@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Bed, Bath, Car, MapPin, Heart } from "lucide-react";
 import PropertyImage from "./PropertyImage";
 import VerifiedBadge from "./VerifiedBadge";
+import PriceTag from "./PriceTag";
 
 export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavorite, toast }) {
   const [hovered, setHovered] = useState(false);
@@ -81,12 +82,12 @@ export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavori
             {/* Precio flotante */}
             <div className="absolute bottom-3 left-3">
               <div className="bg-white/95 dark:bg-gray-900/90 backdrop-blur rounded-xl px-3 py-1.5 shadow">
-                <p className="font-black text-gray-900 dark:text-white text-base leading-none">
-                  ${Number(prop.price).toLocaleString()}
+                <p className="font-black text-gray-900 dark:text-white text-base leading-none whitespace-nowrap">
+                  <PriceTag price={prop.price} currency={prop.currency} />
+                  {prop.status === "Renta" && (
+                    <span className="text-gray-400 text-[10px] font-medium ml-1">/mes</span>
+                  )}
                 </p>
-                {prop.status === "Renta" && (
-                  <p className="text-gray-400 text-[10px] font-medium">/mes</p>
-                )}
               </div>
             </div>
           </div>

@@ -10,9 +10,11 @@ import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
 import VerifiedBadge from "../components/VerifiedBadge";
+import PriceTag from "../components/PriceTag";
 import { useProperties } from "../context/PropertiesContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { formatPriceShort } from "../utils/formatPrice";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -21,10 +23,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
 });
 
-function createPriceIcon(price, isActive, status) {
-  const formatted = price >= 1000000
-    ? `$${(price / 1000000).toFixed(1)}M`
-    : price >= 1000 ? `$${Math.round(price / 1000)}K` : `$${price}`;
+function createPriceIcon(price, isActive, status, currency) {
+  const formatted = formatPriceShort(price, currency);
   const bg = isActive ? "#2563eb" : status === "Renta" ? "#22c55e" : "#1e293b";
   return L.divIcon({
     className: "",
@@ -47,7 +47,7 @@ function PropertyPopupContent({ prop }) {
     <div className="text-sm min-w-[160px]">
       <PropertyImage src={prop.image} type={prop.type} alt={prop.title} className="w-full h-24 object-cover rounded-lg mb-2"/>
       <p className="font-bold text-gray-900 leading-snug">{prop.title}</p>
-      <p className="text-blue-600 font-black mt-1">${Number(prop.price).toLocaleString()}</p>
+      <p className="text-blue-600 font-black mt-1"><PriceTag price={prop.price} currency={prop.currency} /></p>
       <p className="text-gray-500 text-xs mt-0.5">{prop.status} · {prop.type}</p>
       <Link to={`/property/${prop.id}`} className="block mt-2 bg-blue-600 text-white text-center py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
         Ver detalles →
@@ -111,7 +111,7 @@ export default function SearchResults() {
   }, [searchParams]);
 
   const { toggleFavorite, isFavorite } = useProperties();
-  const { currentUser, getToken } = useAuth();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
   const [savingSearch, setSavingSearch] = useState(false);
   const query      = searchParams.get("q") || "";
@@ -127,7 +127,8 @@ export default function SearchResults() {
     try {
       const res = await fetch(`${API_URL}/api/saved-searches`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
         body: JSON.stringify({ name: name.trim(), filters: { ...filters, search: query } }),
       });
       const data = await res.json();
@@ -153,9 +154,8 @@ export default function SearchResults() {
       if (f.maxPrice) params.set("maxPrice", f.maxPrice);
       params.set("limit", 50);
 
-      const token = getToken();
       const res  = await fetch(`${API_URL}/api/properties?${params}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -170,7 +170,7 @@ export default function SearchResults() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   // Debounce: espera 400ms después del último cambio antes de hacer fetch
   useEffect(() => {
@@ -328,7 +328,7 @@ export default function SearchResults() {
                           <MapPin size={12} strokeWidth={2.25} /> {prop.city || "Rep. Dominicana"}
                         </p>
                         <p className="text-blue-600 dark:text-blue-400 font-black text-base mt-1">
-                          ${Number(prop.price).toLocaleString()}
+                          <PriceTag price={prop.price} currency={prop.currency} />
                           {prop.status === "Renta" && <span className="text-xs font-normal text-gray-400">/mes</span>}
                         </p>
                         <div className="flex gap-3 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-400 text-xs">
@@ -365,7 +365,7 @@ export default function SearchResults() {
             {results.map((prop) => (
               currentUser ? (
                 <Marker key={prop.id} position={[prop.lat, prop.lng]}
-                  icon={createPriceIcon(prop.price, activeId === prop.id, prop.status)}
+                  icon={createPriceIcon(prop.price, activeId === prop.id, prop.status, prop.currency)}
                   eventHandlers={{ mouseover: () => setActiveId(prop.id), mouseout: () => setActiveId(null) }}
                 >
                   <Popup>
@@ -379,7 +379,7 @@ export default function SearchResults() {
                 >
                   <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent>
                     <span className="font-bold">
-                      ${prop.price >= 1000000 ? `${(prop.price / 1000000).toFixed(1)}M` : Math.round(prop.price / 1000) + "K"}
+                      {formatPriceShort(prop.price, prop.currency)}
                     </span>
                   </Tooltip>
                   <Popup>

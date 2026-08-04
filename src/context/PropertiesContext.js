@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth, CSRF_HEADERS } from "./AuthContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -16,7 +16,7 @@ const normalizeProperty = (p) => ({
 const PropertiesContext = createContext();
 
 export function PropertiesProvider({ children }) {
-  const { getToken, currentUser } = useAuth();
+  const { currentUser } = useAuth();
 
   const [properties,    setProperties]    = useState([]);
   const [pagination,    setPagination]    = useState({ page: 1, totalPages: 1, hasMore: false, total: 0 });
@@ -44,9 +44,8 @@ export function PropertiesProvider({ children }) {
       if (filters.page)     params.set("page",     filters.page);
       params.set("limit", filters.limit || 12);
 
-      const token = getToken();
       const res  = await fetch(`${API_URL}/api/properties?${params}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cargar propiedades");
@@ -74,18 +73,17 @@ export function PropertiesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => { fetchProperties(); }, [fetchProperties]);
 
   // ── CARGAR MIS PROPIEDADES directo desde el backend ───────────────────────
   const fetchUserProperties = useCallback(async () => {
-    const token = getToken();
-    if (!token) { setUserProperties([]); return; }
+    if (!currentUser) { setUserProperties([]); return; }
     try {
       // Pedimos todas las propiedades del usuario autenticado
       const res  = await fetch(`${API_URL}/api/properties?limit=100`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) return;
@@ -100,17 +98,16 @@ export function PropertiesProvider({ children }) {
     } catch (err) {
       console.error("fetchUserProperties error:", err);
     }
-  }, [getToken, currentUser?.id]);
+  }, [currentUser]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchUserProperties(); }, [currentUser?.id]);
 
   // ── FAVORITOS ─────────────────────────────────────────────────────────────
   const fetchFavorites = useCallback(async () => {
-    const token = localStorage.getItem("domify-token");
-    if (!token) { setFavorites([]); localStorage.removeItem("domify-favorites"); return; }
+    if (!currentUser) { setFavorites([]); localStorage.removeItem("domify-favorites"); return; }
     try {
-      const res  = await fetch(`${API_URL}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } });
+      const res  = await fetch(`${API_URL}/api/favorites`, { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json();
       setFavorites(data.favorites);
@@ -118,22 +115,23 @@ export function PropertiesProvider({ children }) {
     } catch (err) {
       console.error("fetchFavorites error:", err);
     }
-  }, []);
+  }, [currentUser]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchFavorites(); }, [currentUser?.id]);
 
   // ── PUBLICAR ──────────────────────────────────────────────────────────────
   const addProperty = useCallback(async (formData) => {
-    const token = getToken();
     try {
       const res = await fetch(`${API_URL}/api/properties`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
         body: JSON.stringify({
           title:       formData.title,
           description: formData.description,
           price:       formData.price,
+          currency:    formData.currency || "USD",
           city:        formData.city,
           lat:         formData.lat,
           lng:         formData.lng,
@@ -156,18 +154,18 @@ export function PropertiesProvider({ children }) {
       console.error("addProperty error:", err);
       throw err;
     }
-  }, [getToken]);
+  }, []);
 
   // ── ACTUALIZAR ────────────────────────────────────────────────────────────
   const updateProperty = useCallback(async (id, updates) => {
-    const token = getToken();
     try {
       const payload = { ...updates };
       if (payload.type)   payload.type   = payload.type.toUpperCase();
       if (payload.status) payload.status = payload.status.toUpperCase();
       const res  = await fetch(`${API_URL}/api/properties/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -180,15 +178,15 @@ export function PropertiesProvider({ children }) {
       console.error("updateProperty error:", err);
       throw err;
     }
-  }, [getToken]);
+  }, []);
 
   // ── ELIMINAR ──────────────────────────────────────────────────────────────
   const deleteProperty = useCallback(async (id) => {
-    const token = getToken();
     try {
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Error al eliminar"); }
       setProperties((prev)     => prev.filter((p) => p.id !== id));
@@ -197,12 +195,11 @@ export function PropertiesProvider({ children }) {
       console.error("deleteProperty error:", err);
       throw err;
     }
-  }, [getToken]);
+  }, []);
 
   // ── TOGGLE FAVORITO ───────────────────────────────────────────────────────
   const toggleFavorite = useCallback(async (id) => {
-    const token = localStorage.getItem("domify-token");
-    if (!token) return;
+    if (!currentUser) return;
     const isCurrentlyFav = favorites.includes(id);
     setFavorites((prev) => {
       const next = isCurrentlyFav ? prev.filter((f) => f !== id) : [...prev, id];
@@ -212,7 +209,8 @@ export function PropertiesProvider({ children }) {
     try {
       await fetch(`${API_URL}/api/favorites/${id}`, {
         method: isCurrentlyFav ? "DELETE" : "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
       });
     } catch (err) {
       console.error("toggleFavorite sync error:", err);
@@ -222,7 +220,7 @@ export function PropertiesProvider({ children }) {
         return reverted;
       });
     }
-  }, [favorites]);
+  }, [favorites, currentUser]);
 
   const isFavorite           = useCallback((id) => favorites.includes(id), [favorites]);
   const getUserProperties    = useCallback(() => userProperties, [userProperties]);

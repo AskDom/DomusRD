@@ -14,6 +14,8 @@ import { useAuth } from "../context/AuthContext";
 import { useInbox } from "../context/InboxContext";
 import ReviewSection from "../components/ReviewSection";
 import { useToast } from "../context/ToastContext";
+import { formatPrice } from "../utils/formatPrice";
+import PriceTag from "../components/PriceTag";
 
 const extraImages = {
   Apartamento: [
@@ -107,7 +109,7 @@ export default function PropertyDetail() {
   };
 
   const handleWhatsApp = () => {
-    const msg = `🏠 *${property.title}*\n💰 $${Number(property.price).toLocaleString()}\n📍 ${property.city || "República Dominicana"}\n\n🔗 ${window.location.href}`;
+    const msg = `🏠 *${property.title}*\n💰 ${formatPrice(property.price, property.currency)}\n📍 ${property.city || "República Dominicana"}\n\n🔗 ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
@@ -159,7 +161,7 @@ export default function PropertyDetail() {
         }`}
       >
         <p className="font-black text-gray-900 dark:text-white text-lg whitespace-nowrap">
-          ${Number(property.price).toLocaleString()}
+          <PriceTag price={property.price} currency={property.currency} />
         </p>
         <p className="hidden sm:block text-sm text-gray-400 truncate flex-1">{property.title}</p>
         <button
@@ -334,19 +336,6 @@ export default function PropertyDetail() {
           <p className="text-gray-400 mt-2 flex items-center gap-1.5 text-sm">
             <MapPin size={14} strokeWidth={2.25} /> {property.city || "República Dominicana"}
           </p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {[
-              { Icon: Bed, value: property.rooms, label: "hab" },
-              { Icon: Bath, value: property.baths, label: "baños" },
-              { Icon: Car, value: property.parking, label: "parq" },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full px-3.5 py-2 transition-colors">
-                <s.Icon size={15} strokeWidth={2.25} className="text-gray-500 dark:text-gray-400" />
-                <span className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</span>
-                <span className="text-gray-400 text-xs">{s.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -361,9 +350,26 @@ export default function PropertyDetail() {
                   {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
                 </p>
                 <p className="text-5xl md:text-6xl font-black text-blue-600 dark:text-blue-400 leading-none tracking-tight">
-                  ${Number(property.price).toLocaleString()}
+                  <PriceTag price={property.price} currency={property.currency} />
                   {property.status === "Renta" && <span className="text-lg font-normal text-gray-400 ml-2">/mes</span>}
                 </p>
+                <div className="flex flex-wrap gap-6 mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+                  {[
+                    { Icon: Bed, value: property.rooms, label: "habitaciones" },
+                    { Icon: Bath, value: property.baths, label: "baños" },
+                    { Icon: Car, value: property.parking, label: "parqueos" },
+                  ].map((s) => (
+                    <div key={s.label} className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                        <s.Icon size={18} strokeWidth={2.25} className="text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 dark:text-white text-lg leading-none">{s.value}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{s.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* DESCRIPCIÓN */}
@@ -425,28 +431,44 @@ export default function PropertyDetail() {
                     </Marker>
                   </MapContainer>
                 ) : (
-                  <div
-                    className="relative h-[280px] rounded-2xl overflow-hidden flex items-center justify-center text-center px-6"
-                    style={{
-                      backgroundImage: "radial-gradient(circle at 30% 30%, #dbeafe, #f1f5f9 60%)",
-                    }}
-                  >
-                    <div className="absolute inset-0 dark:bg-gray-800" />
-                    <div className="relative z-10">
-                      <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center mx-auto mb-3">
-                        <MapPin size={22} strokeWidth={2.25} className="text-blue-600" />
-                      </div>
-                      <p className="font-bold text-gray-900 dark:text-white">Zona aproximada</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">
-                        Inicia sesión para ver la ubicación exacta de esta propiedad.
-                      </p>
-                      <button
-                        onClick={() => setAuthOpen(true)}
-                        className="mt-4 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition hover:opacity-90"
-                        style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}
+                  <div className="relative h-[280px] rounded-2xl overflow-hidden">
+                    {/* Mapa real de fondo, desenfocado y sin interacción — el
+                        scale-110 evita que se note el borde sin difuminar
+                        que deja el filtro blur en los bordes del contenedor. */}
+                    <div className="absolute inset-0 scale-110">
+                      <MapContainer
+                        center={[property.lat, property.lng]}
+                        zoom={13}
+                        zoomControl={false}
+                        dragging={false}
+                        scrollWheelZoom={false}
+                        doubleClickZoom={false}
+                        touchZoom={false}
+                        boxZoom={false}
+                        keyboard={false}
+                        attributionControl={false}
+                        className="h-full w-full blur-md pointer-events-none"
                       >
-                        Iniciar sesión →
-                      </button>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      </MapContainer>
+                    </div>
+                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center text-center px-6">
+                      <div>
+                        <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center mx-auto mb-3">
+                          <MapPin size={22} strokeWidth={2.25} className="text-white" />
+                        </div>
+                        <p className="font-bold text-white">Zona aproximada</p>
+                        <p className="text-sm text-white/70 mt-1 max-w-xs mx-auto">
+                          Inicia sesión para ver la ubicación exacta de esta propiedad.
+                        </p>
+                        <button
+                          onClick={() => setAuthOpen(true)}
+                          className="mt-4 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition hover:opacity-90"
+                          style={{ background: "linear-gradient(135deg, #1a56db, #0ea5e9)" }}
+                        >
+                          Iniciar sesión →
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -468,7 +490,7 @@ export default function PropertyDetail() {
                     {property.status === "Venta" ? "Precio de venta" : "Renta mensual"}
                   </p>
                   <p className="text-3xl font-black">
-                    ${Number(property.price).toLocaleString()}
+                    <PriceTag price={property.price} currency={property.currency} />
                     {property.status === "Renta" && <span className="text-sm font-normal opacity-70 ml-1">/mes</span>}
                   </p>
                 </div>

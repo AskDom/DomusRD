@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
+import PriceTag from "../components/PriceTag";
 import { useToast } from "../context/ToastContext";
 import Navbar from "../components/Navbar";
 
@@ -41,7 +42,7 @@ function StatCard({ label, value, sub, color = "blue" }) {
 }
 
 export default function Admin() {
-  const { currentUser, getToken } = useAuth();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -62,45 +63,45 @@ export default function Admin() {
 
   const authHeaders = useCallback(() => ({
     "Content-Type": "application/json",
-    Authorization: `Bearer ${getToken()}`,
-  }), [getToken]);
+    ...CSRF_HEADERS,
+  }), []);
 
   // ── FETCH ────────────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/stats`, { headers: authHeaders() });
+      const res  = await fetch(`${API_URL}/api/admin/stats`, { credentials: "include" });
       const data = await res.json();
       if (res.ok) { setStats(data); setError(""); }
       else setError(formatAdminError(data, res.status, "las estadísticas"));
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
-  }, [authHeaders]);
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/users?search=${encodeURIComponent(search)}&limit=50`, { headers: authHeaders() });
+      const res  = await fetch(`${API_URL}/api/admin/users?search=${encodeURIComponent(search)}&limit=50`, { credentials: "include" });
       const data = await res.json();
       if (res.ok) { setUsers(data.users); setError(""); }
       else setError(formatAdminError(data, res.status, "los usuarios"));
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
-  }, [authHeaders, search]);
+  }, [search]);
 
   const fetchProperties = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/properties?search=${encodeURIComponent(search)}&limit=50`, { headers: authHeaders() });
+      const res  = await fetch(`${API_URL}/api/admin/properties?search=${encodeURIComponent(search)}&limit=50`, { credentials: "include" });
       const data = await res.json();
       if (res.ok) { setProperties(data.properties); setError(""); }
       else setError(formatAdminError(data, res.status, "las propiedades"));
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally { setLoading(false); }
-  }, [authHeaders, search]);
+  }, [search]);
 
   useEffect(() => {
     if (tab === "stats")      fetchStats();
@@ -114,6 +115,7 @@ export default function Admin() {
     try {
       const res  = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
         method: "PATCH",
+        credentials: "include",
         headers: authHeaders(),
         body: JSON.stringify({ role }),
       });
@@ -133,7 +135,7 @@ export default function Admin() {
     setBusyId(`user-delete-${userId}`);
     try {
       const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
-        method: "DELETE", headers: authHeaders(),
+        method: "DELETE", credentials: "include", headers: authHeaders(),
       });
       if (res.ok) {
         setUsers((prev) => prev.filter((u) => u.id !== userId));
@@ -154,6 +156,7 @@ export default function Admin() {
     try {
       const res  = await fetch(`${API_URL}/api/admin/properties/${propId}/verify`, {
         method: "PATCH",
+        credentials: "include",
         headers: authHeaders(),
         body: JSON.stringify({ verified: !current }),
       });
@@ -176,7 +179,7 @@ export default function Admin() {
     setBusyId(`prop-delete-${propId}`);
     try {
       const res = await fetch(`${API_URL}/api/admin/properties/${propId}`, {
-        method: "DELETE", headers: authHeaders(),
+        method: "DELETE", credentials: "include", headers: authHeaders(),
       });
       if (res.ok) {
         setProperties((prev) => prev.filter((p) => p.id !== propId));
@@ -392,7 +395,7 @@ export default function Admin() {
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.city}</td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">
-                        ${Number(p.price).toLocaleString()}
+                        <PriceTag price={p.price} currency={p.currency} />
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.publishedBy?.name}</td>
                       <td className="px-4 py-3">

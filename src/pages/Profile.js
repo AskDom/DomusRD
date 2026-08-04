@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Star, Home as HomeIcon, User as UserIcon, Plus, Loader2, X, MoreVertical, Eye, Pencil, CheckCircle2, Flag, Undo2, Trash2 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useToast } from "../context/ToastContext";
+import PriceTag from "../components/PriceTag";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -96,7 +97,7 @@ function PropertyCard({ prop, onEdit, onDelete, onVerify, onStatusChange, confir
               </div>
               <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug line-clamp-1">{prop.title}</h3>
               <p className="text-blue-600 dark:text-blue-400 font-black text-base mt-0.5">
-                ${Number(prop.price).toLocaleString()}
+                <PriceTag price={prop.price} currency={prop.currency} />
               </p>
               <div className="flex gap-3 mt-1.5 text-xs text-gray-400 flex-wrap">
                 <span className="flex items-center gap-1">
@@ -211,8 +212,18 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Precio (USD)</label>
-              <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={inputClass}/>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Precio</label>
+              <div className="flex gap-2">
+                <select
+                  value={editForm.currency || "USD"}
+                  onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                  className={`${inputClass} w-24 flex-shrink-0 px-2`}
+                >
+                  <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD</option>
+                  <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$</option>
+                </select>
+                <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={inputClass}/>
+              </div>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Operación</label>
@@ -277,7 +288,7 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
-  const { currentUser, logout, updateAvatar, getToken } = useAuth();
+  const { currentUser, logout, updateAvatar } = useAuth();
   const { getFavoriteProperties, getUserProperties, deleteProperty, updateProperty, verifyProperty } = useProperties();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -294,21 +305,22 @@ export default function Profile() {
     setLoadingSaved(true);
     try {
       const res  = await fetch(`${API_URL}/api/saved-searches`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (res.ok) setSavedSearches(data.searches);
     } finally {
       setLoadingSaved(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => { fetchSavedSearches(); }, [fetchSavedSearches]);
 
   const deleteSavedSearch = async (id) => {
     const res = await fetch(`${API_URL}/api/saved-searches/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
+      headers: CSRF_HEADERS,
     });
     if (res.ok) {
       setSavedSearches((prev) => prev.filter((s) => s.id !== id));
@@ -364,6 +376,7 @@ export default function Profile() {
     setEditForm({
       title:       prop.title,
       price:       prop.price,
+      currency:    prop.currency || "USD",
       status:      prop.status,
       type:        prop.type,
       description: prop.description,
@@ -380,7 +393,8 @@ export default function Profile() {
       files.forEach((f) => fd.append("images", f));
       const res  = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("domify-token")}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
         body: fd,
       });
       const data = await res.json();
@@ -570,7 +584,7 @@ export default function Profile() {
                         </div>
                         <div className="p-3.5">
                           <h3 className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">{prop.title}</h3>
-                          <p className="text-blue-600 dark:text-blue-400 font-black mt-0.5">${Number(prop.price).toLocaleString()}</p>
+                          <p className="text-blue-600 dark:text-blue-400 font-black mt-0.5"><PriceTag price={prop.price} currency={prop.currency} /></p>
                           <div className="flex gap-3 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-gray-400 text-xs">
                             <span>🛏 {prop.rooms}</span>
                             <span>🛁 {prop.baths}</span>

@@ -2,6 +2,29 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
+    <!--
+      CSP pensada para lo que esta SPA realmente usa: Google Fonts, GA4,
+      imágenes de Unsplash/Cloudinary, tiles de OpenStreetMap y el backend
+      propio (API + WebSocket de Socket.IO). connect-src queda en "https:"
+      genérico porque REACT_APP_API_URL es una env var que puede apuntar a
+      dominios distintos según el entorno (no hay forma de fijarlo acá en
+      build-time sin acoplar este HTML a un dominio de backend concreto).
+      http://localhost:* y ws://localhost:* están permitidos aparte porque
+      en dev el backend corre sin HTTPS — sin esto, "https:" a secas
+      bloquea silenciosamente TODOS los fetch al backend local.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' https://www.googletagmanager.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https://images.unsplash.com https://res.cloudinary.com https://*.tile.openstreetmap.org;
+      connect-src 'self' https: wss: http://localhost:* ws://localhost:*;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'self';
+    " />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />

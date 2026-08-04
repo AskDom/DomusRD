@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useProperties } from "../context/PropertiesContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -57,7 +57,7 @@ export default function Publish() {
   const [submitting, setSubmitting] = useState(false);
   const [errors,     setErrors]     = useState({});
   const [form, setForm] = useState({
-    title: "", price: "", description: "",
+    title: "", price: "", currency: "USD", description: "",
     type: "Apartamento", status: "Venta",
     rooms: 1, baths: 1, parking: 0,
     city: "", images: [],
@@ -75,7 +75,8 @@ export default function Publish() {
       files.forEach((f) => fd.append("images", f));
       const res  = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("domify-token")}` },
+        credentials: "include",
+        headers: CSRF_HEADERS,
         body: fd,
       });
       const data = await res.json();
@@ -231,13 +232,23 @@ export default function Publish() {
                     className={`${input} ${errors.city ? "ring-2 ring-red-400 border-red-300" : ""}`}
                   />
                 </Field>
-                <Field label="Precio (USD)" error={errors.price}>
-                  <input
-                    type="number" placeholder="150,000"
-                    value={form.price}
-                    onChange={(e) => set("price", e.target.value)}
-                    className={`${input} ${errors.price ? "ring-2 ring-red-400 border-red-300" : ""}`}
-                  />
+                <Field label="Precio" error={errors.price}>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.currency}
+                      onChange={(e) => set("currency", e.target.value)}
+                      className={`${input} w-28 flex-shrink-0 px-2`}
+                    >
+                      <option value="USD" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">USD (US$)</option>
+                      <option value="DOP" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">RD$ (DOP)</option>
+                    </select>
+                    <input
+                      type="number" placeholder="150,000"
+                      value={form.price}
+                      onChange={(e) => set("price", e.target.value)}
+                      className={`${input} ${errors.price ? "ring-2 ring-red-400 border-red-300" : ""}`}
+                    />
+                  </div>
                 </Field>
               </div>
 
