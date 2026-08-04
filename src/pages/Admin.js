@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import PriceTag from "../components/PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 import { useToast } from "../context/ToastContext";
 import Navbar from "../components/Navbar";
 
@@ -393,7 +394,7 @@ export default function Admin() {
                           <span className="font-medium text-gray-900 dark:text-white line-clamp-1">{p.title}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.city}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatLocation(p.city, p.sector)}</td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">
                         <PriceTag price={p.price} currency={p.currency} />
                       </td>

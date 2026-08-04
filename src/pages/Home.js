@@ -15,6 +15,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useToast } from "../context/ToastContext";
 import { formatPriceShort, toUsdEquivalent } from "../utils/formatPrice";
 import PriceTag from "../components/PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -493,7 +494,7 @@ export default function Home() {
                           <PriceTag price={prop.price} currency={prop.currency} />
                           {prop.status === "Renta" && <span className="text-gray-400 font-normal text-xs">/mes</span>}
                         </p>
-                        <p className="text-gray-400 text-xs mt-0.5">📍 {prop.city}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">📍 {formatLocation(prop.city, prop.sector)}</p>
                         <div className="flex gap-2 mt-1.5 text-xs text-gray-500">
                           <span>🛏 {prop.rooms}</span>
                           <span>🛁 {prop.baths}</span>

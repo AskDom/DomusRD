@@ -133,6 +133,7 @@ export function PropertiesProvider({ children }) {
           price:       formData.price,
           currency:    formData.currency || "USD",
           city:        formData.city,
+          sector:      formData.sector || null,
           lat:         formData.lat,
           lng:         formData.lng,
           rooms:       formData.rooms,

@@ -7,6 +7,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import CityAutocomplete from "../components/CityAutocomplete";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -60,7 +61,7 @@ export default function Publish() {
     title: "", price: "", currency: "USD", description: "",
     type: "Apartamento", status: "Venta",
     rooms: 1, baths: 1, parking: 0,
-    city: "", images: [],
+    city: "", sector: "", images: [],
   });
 
   const set = (key, val) => setForm((p) => ({ ...p, [key]: val }));
@@ -224,14 +225,26 @@ export default function Publish() {
               </Field>
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Ciudad / Sector" error={errors.city}>
-                  <input
-                    placeholder="Santo Domingo"
+                <Field label="Ciudad" error={errors.city}>
+                  <CityAutocomplete
                     value={form.city}
-                    onChange={(e) => set("city", e.target.value)}
-                    className={`${input} ${errors.city ? "ring-2 ring-red-400 border-red-300" : ""}`}
+                    onChange={(city) => set("city", city)}
+                    error={errors.city}
+                    className={input}
+                    placeholder="Santo Domingo Este"
                   />
                 </Field>
+                <Field label="Sector / Barrio (opcional)">
+                  <input
+                    placeholder="Sabana Larga"
+                    value={form.sector}
+                    onChange={(e) => set("sector", e.target.value)}
+                    className={input}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <Field label="Precio" error={errors.price}>
                   <div className="flex gap-2">
                     {/* Cada control va en su propio contenedor con el ancho
@@ -258,15 +271,15 @@ export default function Publish() {
                     </div>
                   </div>
                 </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <Field label="Operación">
                   <select value={form.status} onChange={(e) => set("status", e.target.value)} className={input}>
                     <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Venta</option>
                     <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Renta</option>
                   </select>
                 </Field>
+              </div>
+
+              <div>
                 <Field label="Tipo de propiedad">
                   <select value={form.type} onChange={(e) => set("type", e.target.value)} className={input}>
                     <option className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">Apartamento</option>

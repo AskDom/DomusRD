@@ -16,6 +16,7 @@ import ReviewSection from "../components/ReviewSection";
 import { useToast } from "../context/ToastContext";
 import { formatPrice } from "../utils/formatPrice";
 import PriceTag from "../components/PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 
 const extraImages = {
   Apartamento: [
@@ -109,7 +110,7 @@ export default function PropertyDetail() {
   };
 
   const handleWhatsApp = () => {
-    const msg = `🏠 *${property.title}*\n💰 ${formatPrice(property.price, property.currency)}\n📍 ${property.city || "República Dominicana"}\n\n🔗 ${window.location.href}`;
+    const msg = `🏠 *${property.title}*\n💰 ${formatPrice(property.price, property.currency)}\n📍 ${formatLocation(property.city, property.sector)}\n\n🔗 ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
@@ -334,7 +335,7 @@ export default function PropertyDetail() {
             {property.title}
           </h1>
           <p className="text-gray-400 mt-2 flex items-center gap-1.5 text-sm">
-            <MapPin size={14} strokeWidth={2.25} /> {property.city || "República Dominicana"}
+            <MapPin size={14} strokeWidth={2.25} /> {formatLocation(property.city, property.sector)}
           </p>
         </div>
 
@@ -420,7 +421,7 @@ export default function PropertyDetail() {
                   Ubicación
                 </h2>
                 <p className="text-sm text-gray-400 mb-3 flex items-center gap-1">
-                  <MapPin size={13} strokeWidth={2.25} /> {property.city || "República Dominicana"}
+                  <MapPin size={13} strokeWidth={2.25} /> {formatLocation(property.city, property.sector)}
                 </p>
 
                 {currentUser ? (

@@ -5,6 +5,7 @@ import { Bed, Bath, Car, MapPin, Heart } from "lucide-react";
 import PropertyImage from "./PropertyImage";
 import VerifiedBadge from "./VerifiedBadge";
 import PriceTag from "./PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 
 export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavorite, toast }) {
   const [hovered, setHovered] = useState(false);
@@ -98,7 +99,7 @@ export default function PropertyCard({ prop, index = 0, toggleFavorite, isFavori
               {prop.title}
             </h3>
             <p className="text-gray-400 text-xs mt-1 flex items-center gap-1">
-              <MapPin size={12} strokeWidth={2.25} /> {prop.city || "República Dominicana"}
+              <MapPin size={12} strokeWidth={2.25} /> {formatLocation(prop.city, prop.sector)}
             </p>
 
             {/* Amenidades */}

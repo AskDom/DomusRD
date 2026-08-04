@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import PropertyImage from "../components/PropertyImage";
 import VerifiedBadge from "../components/VerifiedBadge";
 import PriceTag from "../components/PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 import { useAuth } from "../context/AuthContext";
 import { useProperties } from "../context/PropertiesContext";
 import { useToast } from "../context/ToastContext";
@@ -116,7 +117,7 @@ function PropertyCard({ prop, index, onRemove }) {
               {prop.title}
             </h3>
             <p className="text-gray-400 text-xs mt-1 flex items-center gap-1">
-              <PinIcon /> {prop.city || "República Dominicana"}
+              <PinIcon /> {formatLocation(prop.city, prop.sector)}
             </p>
 
             {/* Amenidades con SVG */}

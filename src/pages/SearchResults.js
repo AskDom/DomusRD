@@ -11,6 +11,7 @@ import PropertyImage from "../components/PropertyImage";
 import PropertyCardSkeleton from "../components/PropertyCardSkeleton";
 import VerifiedBadge from "../components/VerifiedBadge";
 import PriceTag from "../components/PriceTag";
+import { formatLocation } from "../utils/formatLocation";
 import { useProperties } from "../context/PropertiesContext";
 import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -325,7 +326,7 @@ export default function SearchResults() {
                       <div className="p-3">
                         <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">{prop.title}</h3>
                         <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1">
-                          <MapPin size={12} strokeWidth={2.25} /> {prop.city || "Rep. Dominicana"}
+                          <MapPin size={12} strokeWidth={2.25} /> {formatLocation(prop.city, prop.sector, "Rep. Dominicana")}
                         </p>
                         <p className="text-blue-600 dark:text-blue-400 font-black text-base mt-1">
                           <PriceTag price={prop.price} currency={prop.currency} />
