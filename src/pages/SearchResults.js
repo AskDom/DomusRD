@@ -70,6 +70,11 @@ function MapFocus({ properties, version, useExact }) {
     const points = properties.map((p) =>
       useExact ? [p.lat, p.lng] : approxZoneCenter(p.lat, p.lng)
     );
+    // Leaflet cachea el tamaño del contenedor y no se entera solo si el
+    // layout cambió (ej. al pasar de "sin resultados" a "un resultado") —
+    // sin remedirlo acá, setView/fitBounds calculan el centro con un
+    // tamaño viejo y el mapa termina mostrando otra zona.
+    map.invalidateSize();
     if (points.length === 1) {
       map.setView(points[0], 13, { animate: true });
     } else {

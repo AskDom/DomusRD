@@ -59,6 +59,11 @@ function MapFit({ properties, useExact }) {
     const valid = properties.filter(p => p.lat && p.lng);
     if (!valid.length) return;
     const points = valid.map((p) => useExact ? [p.lat, p.lng] : approxZoneCenter(p.lat, p.lng));
+    // Leaflet cachea el tamaño del contenedor y no se entera solo si el
+    // layout cambió (ej. al pasar de la vista grilla al mapa) — sin
+    // remedirlo acá, setView/fitBounds calculan el centro con un tamaño
+    // viejo y el mapa termina mostrando otra zona.
+    map.invalidateSize();
     if (points.length === 1) { map.setView(points[0], 14); return; }
     const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, { padding: [48, 48] });
