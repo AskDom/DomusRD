@@ -91,6 +91,11 @@ export function AuthProvider({ children }) {
         setError(msg);
         return false;
       }
+      // Cuentas ADMIN con 2FA activo no abren sesión con el password solo —
+      // el caller (AuthModal) debe pedir el código y llamar a verifyTwoFactor.
+      if (data.requiresTwoFactor) {
+        return { requiresTwoFactor: true, tempToken: data.tempToken };
+      }
       const user = normalizeUser(data.user);
       saveSession(user);
       setCurrentUser(user);
@@ -99,6 +104,49 @@ export function AuthProvider({ children }) {
       setError("No se pudo conectar con el servidor.");
       return false;
     } finally { setLoading(false); }
+  }, []);
+
+  // Segundo paso del login para cuentas con 2FA — confirma el código TOTP
+  // contra el tempToken que devolvió login() y recién ahí abre la sesión real.
+  const verifyTwoFactor = useCallback(async ({ tempToken, code }) => {
+    setError(""); setLoading(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/auth/2fa/verify`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
+        body: JSON.stringify({ tempToken, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data.fields?.[0]?.message || data.error || "Código incorrecto.";
+        setError(msg);
+        return false;
+      }
+      const user = normalizeUser(data.user);
+      saveSession(user);
+      setCurrentUser(user);
+      return user;
+    } catch {
+      setError("No se pudo conectar con el servidor.");
+      return false;
+    } finally { setLoading(false); }
+  }, []);
+
+  // Re-lee /me y actualiza currentUser — para cuando algo cambia del lado
+  // del backend sin pasar por login/register (ej. activar/desactivar 2FA).
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const user = normalizeUser(data.user);
+      saveSession(user);
+      setCurrentUser(user);
+      return user;
+    } catch {
+      return null;
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -145,7 +193,7 @@ export function AuthProvider({ children }) {
   // El rol se actualiza en segundo plano cuando /api/auth/me responde
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, updateAvatar }}>
+    <AuthContext.Provider value={{ currentUser, login, register, logout, error, setError, loading, updateAvatar, verifyTwoFactor, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

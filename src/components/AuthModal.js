@@ -39,9 +39,18 @@ export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
   const [showPass, setShowPass] = useState(false);
-  const { login, register, error, setError, loading } = useAuth();
+  // Cuando login() devuelve requiresTwoFactor, guardamos el tempToken acá y
+  // mostramos el paso de código en vez de cerrar el modal.
+  const [twoFactorToken, setTwoFactorToken] = useState(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const { login, register, verifyTwoFactor, error, setError, loading } = useAuth();
   const { banner } = useToast();
   const navigate = useNavigate();
+
+  const resetTwoFactor = () => {
+    setTwoFactorToken(null);
+    setTwoFactorCode("");
+  };
 
   const goToForgotPassword = () => {
     onClose();
@@ -49,6 +58,11 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    resetTwoFactor();
+    onClose();
+  };
 
   const handleSubmit = async () => {
     // Validación del lado del cliente
@@ -76,9 +90,16 @@ export default function AuthModal({ isOpen, onClose }) {
     const user = isLogin
       ? await login({ email: form.email, password: form.password })
       : await register({ name: form.name, email: form.email, password: form.password, role: form.role });
+
+    if (user && user.requiresTwoFactor) {
+      setTwoFactorToken(user.tempToken);
+      return;
+    }
+
     if (user) {
       onClose();
       setForm({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
+      resetTwoFactor();
       const firstName = user.name?.split(" ")[0] || form.name?.split(" ")[0] || "Usuario";
       banner({
         message: isLogin ? `¡Bienvenido de vuelta, ${firstName}! 👋` : `¡Cuenta creada, ${firstName}! 🎉`,
@@ -89,10 +110,32 @@ export default function AuthModal({ isOpen, onClose }) {
     }
   };
 
+  const handleVerifyTwoFactor = async () => {
+    if (!twoFactorCode || twoFactorCode.length !== 6) {
+      setError("Ingresa el código de 6 dígitos");
+      return;
+    }
+    setError("");
+    const user = await verifyTwoFactor({ tempToken: twoFactorToken, code: twoFactorCode });
+    if (user) {
+      onClose();
+      setForm({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
+      resetTwoFactor();
+      const firstName = user.name?.split(" ")[0] || "Usuario";
+      banner({
+        message: `¡Bienvenido de vuelta, ${firstName}! 👋`,
+        subtitle: `Nos alegra tenerte de vuelta en Domify`,
+        type: "success",
+        duration: 4500,
+      });
+    }
+  };
+
   const switchTab = (toLogin) => {
     setIsLogin(toLogin);
     setError("");
     setForm({ name: "", email: "", password: "", confirmPassword: "", role: "Cliente" });
+    resetTwoFactor();
   };
 
   const inputClass = "w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm";
@@ -106,7 +149,7 @@ export default function AuthModal({ isOpen, onClose }) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[2000] flex items-center justify-center p-4"
           style={{ backdropFilter: "blur(8px)", background: "rgba(0,0,0,0.6)" }}
-          onClick={(e) => e.target === e.currentTarget && onClose()}
+          onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -179,25 +222,80 @@ export default function AuthModal({ isOpen, onClose }) {
                 <div>
                   <AnimatePresence mode="wait">
                     <motion.h2
-                      key={isLogin ? "login" : "register"}
+                      key={twoFactorToken ? "2fa" : isLogin ? "login" : "register"}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 10 }}
                       className="text-2xl font-black text-gray-900 dark:text-white"
                     >
-                      {isLogin ? "Iniciar sesión" : "Crear cuenta"}
+                      {twoFactorToken ? "Verificación en dos pasos" : isLogin ? "Iniciar sesión" : "Crear cuenta"}
                     </motion.h2>
                   </AnimatePresence>
                   <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-                    {isLogin ? "Accede a tu cuenta de Domify" : "Únete a la comunidad inmobiliaria"}
+                    {twoFactorToken
+                      ? "Ingresa el código de tu app de autenticación"
+                      : isLogin ? "Accede a tu cuenta de Domify" : "Únete a la comunidad inmobiliaria"}
                   </p>
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition text-xl ml-4 mt-1 flex-shrink-0"
                 >×</button>
               </div>
 
+              {twoFactorToken ? (
+                <div className="px-6 py-5 space-y-3 flex-1">
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 rounded-xl px-4 py-3 text-sm font-medium"
+                      >
+                        ⚠️ {error}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 block">
+                      Código de 6 dígitos
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="000000"
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onKeyDown={(e) => e.key === "Enter" && handleVerifyTwoFactor()}
+                      className={`${inputClass} text-center text-2xl tracking-[0.5em] font-bold`}
+                      autoFocus
+                    />
+                  </div>
+
+                  <motion.button
+                    onClick={handleVerifyTwoFactor}
+                    disabled={loading}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ background: loading ? "#6b7280" : "linear-gradient(135deg, #1a56db 0%, #0ea5e9 100%)" }}
+                  >
+                    {loading ? "Verificando..." : "Verificar →"}
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={resetTwoFactor}
+                    className="w-full text-center text-sm text-gray-500 dark:text-gray-400 hover:underline pt-1"
+                  >
+                    ← Volver a iniciar sesión
+                  </button>
+                </div>
+              ) : (
+              <>
               {/* Tabs */}
               <div className="px-6 mt-5">
                 <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
@@ -383,6 +481,8 @@ export default function AuthModal({ isOpen, onClose }) {
                   </button>
                 </p>
               </div>
+              </>
+              )}
             </div>
           </motion.div>
         </motion.div>

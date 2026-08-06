@@ -292,6 +292,206 @@ function EditModal({ prop, editForm, setEditForm, onSave, onClose, uploadingEdit
   );
 }
 
+function TwoFactorSection() {
+  const { currentUser, refreshUser } = useAuth();
+  const { toast } = useToast();
+  const [step, setStep] = useState("idle"); // idle | setup | disable
+  const [qr, setQr] = useState(null);
+  const [secret, setSecret] = useState("");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const inputClass = "w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white transition";
+
+  const cancelSetup = () => {
+    setStep("idle");
+    setQr(null);
+    setSecret("");
+    setCode("");
+  };
+
+  const startSetup = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/2fa/setup`, {
+        method: "POST",
+        credentials: "include",
+        headers: CSRF_HEADERS,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo iniciar la configuración.");
+      setQr(data.qr);
+      setSecret(data.secret);
+      setStep("setup");
+    } catch (err) {
+      toast({ message: err.message, type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmEnable = async () => {
+    if (code.length !== 6) {
+      toast({ message: "Ingresa el código de 6 dígitos", type: "error" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/2fa/enable`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Código incorrecto.");
+      await refreshUser();
+      cancelSetup();
+      toast({ message: "Verificación en dos pasos activada ✅", type: "success" });
+    } catch (err) {
+      toast({ message: err.message, type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDisable = async () => {
+    if (!password) {
+      toast({ message: "Ingresa tu contraseña actual", type: "error" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/2fa/disable`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...CSRF_HEADERS },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Contraseña incorrecta.");
+      await refreshUser();
+      setStep("idle");
+      setPassword("");
+      toast({ message: "Verificación en dos pasos desactivada", type: "info" });
+    } catch (err) {
+      toast({ message: err.message, type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden mt-6">
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <ShieldCheck size={18} strokeWidth={2.25} className="text-purple-500" />
+          Verificación en dos pasos
+        </h3>
+        {currentUser.totpEnabled && step === "idle" && (
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            Activa
+          </span>
+        )}
+      </div>
+
+      <div className="p-5">
+        {step === "idle" && !currentUser.totpEnabled && (
+          <>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Protege tu cuenta de administrador con un código adicional desde una app como Google Authenticator o Authy.
+            </p>
+            <button
+              onClick={startSetup}
+              disabled={loading}
+              className="text-sm font-bold text-white px-4 py-2.5 rounded-xl transition disabled:opacity-60"
+              style={{ background: "#111827" }}
+            >
+              {loading ? "Generando..." : "Activar verificación en dos pasos"}
+            </button>
+          </>
+        )}
+
+        {step === "idle" && currentUser.totpEnabled && (
+          <>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Tu cuenta está protegida con un segundo paso al iniciar sesión.
+            </p>
+            <button
+              onClick={() => setStep("disable")}
+              className="text-sm font-bold text-red-500 hover:text-red-600 transition"
+            >
+              Desactivar verificación en dos pasos
+            </button>
+          </>
+        )}
+
+        {step === "setup" && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Escanea este código con tu app de autenticación y luego ingresa el código de 6 dígitos que te muestre.
+            </p>
+            {qr && (
+              <img src={qr} alt="Código QR para activar 2FA" className="w-40 h-40 rounded-xl border border-gray-100 dark:border-gray-700 mx-auto" />
+            )}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">
+                ¿No puedes escanear? Ingresa este código manualmente
+              </label>
+              <code className="block text-xs bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 break-all text-gray-600 dark:text-gray-300">
+                {secret}
+              </code>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Código de 6 dígitos</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className={`${inputClass} text-center text-xl tracking-[0.4em] font-bold`}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={cancelSetup} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Cancelar
+              </button>
+              <button onClick={confirmEnable} disabled={loading} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60" style={{ background: "#111827" }}>
+                {loading ? "Verificando..." : "Confirmar y activar"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === "disable" && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Ingresa tu contraseña actual para desactivar la verificación en dos pasos.
+            </p>
+            <input
+              type="password"
+              placeholder="Contraseña actual"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputClass}
+            />
+            <div className="flex gap-3">
+              <button onClick={() => { setStep("idle"); setPassword(""); }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Cancelar
+              </button>
+              <button onClick={confirmDisable} disabled={loading} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition disabled:opacity-60">
+                {loading ? "Desactivando..." : "Desactivar"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "propiedades";
@@ -676,6 +876,8 @@ export default function Profile() {
                   </p>
                 </div>
               </div>
+
+              {currentUser.role === "Admin" && <TwoFactorSection />}
             </motion.div>
           )}
         </AnimatePresence>
