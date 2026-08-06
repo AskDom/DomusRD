@@ -4,13 +4,18 @@ import './index.css';
 import App from './App';
 import { initAnalytics } from './analytics';
 import reportWebVitals from './reportWebVitals';
+import { ErrorBoundary } from '@sentry/react';
+import './sentry'; // side-effect: llama a init() si hay DSN configurado
+import ErrorFallback from './components/ErrorFallback';
 
 initAnalytics();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary fallback={ErrorFallback}>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );
 
