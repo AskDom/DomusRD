@@ -57,17 +57,26 @@ function PropertyPopupContent({ prop }) {
   );
 }
 
-function MapFocus({ properties, version }) {
+// useExact debe coincidir con lo que realmente se dibuja más abajo (Marker
+// en la posición exacta si hay sesión, Circle en approxZoneCenter si no) —
+// si no, el mapa centraba en la coordenada real mientras lo que se veía
+// era el círculo redondeado a 2 decimales, que en una franja de tierra
+// angosta como la península de Samaná puede caer varios cientos de
+// metros mar adentro.
+function MapFocus({ properties, version, useExact }) {
   const map = useMap();
   useEffect(() => {
-    if (properties.length === 1) {
-      map.setView([properties[0].lat, properties[0].lng], 13, { animate: true });
-    } else if (properties.length > 1) {
-      const bounds = L.latLngBounds(properties.map((p) => [p.lat, p.lng]));
-      map.fitBounds(bounds, { padding: [60, 60], animate: true });
+    if (properties.length === 0) return;
+    const points = properties.map((p) =>
+      useExact ? [p.lat, p.lng] : approxZoneCenter(p.lat, p.lng)
+    );
+    if (points.length === 1) {
+      map.setView(points[0], 13, { animate: true });
+    } else {
+      map.fitBounds(L.latLngBounds(points), { padding: [60, 60], animate: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
+  }, [version, useExact]);
   return null;
 }
 
@@ -362,7 +371,7 @@ export default function SearchResults() {
         <div className="hidden lg:block flex-1 relative">
           <MapContainer center={[18.7357, -70.1627]} zoom={7} scrollWheelZoom className="w-full h-full" style={{ zIndex: 0 }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-            <MapFocus properties={results} version={mapVersion}/>
+            <MapFocus properties={results} version={mapVersion} useExact={!!currentUser}/>
             {results.map((prop) => (
               currentUser ? (
                 <Marker key={prop.id} position={[prop.lat, prop.lng]}
