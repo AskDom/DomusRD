@@ -78,7 +78,11 @@ function MapFocus({ properties, version, useExact }) {
     if (points.length === 1) {
       map.setView(points[0], 13, { animate: true });
     } else {
-      map.fitBounds(L.latLngBounds(points), { padding: [60, 60], animate: true });
+      // Sin maxZoom, si las propiedades están muy juntas entre sí (ej. varias
+      // en el mismo sector de una provincia chica), fitBounds puede zoomear
+      // hasta el máximo del mapa para "ajustar" un área minúscula — a ese
+      // nivel los pines quedan prácticamente imposibles de ubicar.
+      map.fitBounds(L.latLngBounds(points), { padding: [60, 60], animate: true, maxZoom: 13 });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version, useExact]);

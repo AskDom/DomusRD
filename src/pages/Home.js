@@ -66,7 +66,10 @@ function MapFit({ properties, useExact }) {
     map.invalidateSize();
     if (points.length === 1) { map.setView(points[0], 14); return; }
     const bounds = L.latLngBounds(points);
-    map.fitBounds(bounds, { padding: [48, 48] });
+    // Sin maxZoom, si las propiedades están muy juntas entre sí, fitBounds
+    // puede zoomear hasta el máximo del mapa para "ajustar" un área
+    // minúscula — a ese nivel los pines quedan casi imposibles de ubicar.
+    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, useExact]);
   return null;
