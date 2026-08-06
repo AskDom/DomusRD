@@ -42,18 +42,36 @@ function approxZoneCenter(lat, lng) {
   return [round(lat), round(lng)];
 }
 
-// Ajusta el mapa a los bounds de las propiedades
-function MapFit({ properties }) {
+// Ajusta el mapa a los bounds de las propiedades. useExact debe coincidir
+// con lo que realmente se dibuja más abajo (Marker en la posición exacta
+// si hay sesión, Circle en approxZoneCenter si no) — si no, el mapa podía
+// centrar en la coordenada real mientras lo que se veía era el círculo
+// redondeado a 2 decimales, que en una franja de tierra angosta como la
+// península de Samaná puede caer varios cientos de metros mar adentro.
+function MapFit({ properties, useExact }) {
   const map = useMap();
+  // Un key por ids, no por cantidad: si el filtro pasa de una propiedad a
+  // OTRA propiedad distinta (mismo largo=1), esto sí dispara el recentrado;
+  // con solo `properties.length` como dependencia, ese caso no re-corría.
+  const key = properties.map((p) => p.id).join(',');
   useEffect(() => {
     if (!properties.length) return;
     const valid = properties.filter(p => p.lat && p.lng);
     if (!valid.length) return;
-    if (valid.length === 1) { map.setView([valid[0].lat, valid[0].lng], 14); return; }
-    const bounds = L.latLngBounds(valid.map(p => [p.lat, p.lng]));
-    map.fitBounds(bounds, { padding: [48, 48] });
+    const points = valid.map((p) => useExact ? [p.lat, p.lng] : approxZoneCenter(p.lat, p.lng));
+    // Leaflet cachea el tamaño del contenedor y no se entera solo si el
+    // layout cambió (ej. al pasar de la vista grilla al mapa) — sin
+    // remedirlo acá, setView/fitBounds calculan el centro con un tamaño
+    // viejo y el mapa termina mostrando otra zona.
+    map.invalidateSize();
+    if (points.length === 1) { map.setView(points[0], 14); return; }
+    const bounds = L.latLngBounds(points);
+    // Sin maxZoom, si las propiedades están muy juntas entre sí, fitBounds
+    // puede zoomear hasta el máximo del mapa para "ajustar" un área
+    // minúscula — a ese nivel los pines quedan casi imposibles de ubicar.
+    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties.length]);
+  }, [key, useExact]);
   return null;
 }
 
@@ -474,7 +492,7 @@ export default function Home() {
                 style={{ height: "100%", width: "100%", zIndex: 0 }}
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                <MapFit properties={filtered.filter(p => p.lat && p.lng)} />
+                <MapFit properties={filtered.filter(p => p.lat && p.lng)} useExact={!!currentUser} />
                 {filtered.filter(p => p.lat && p.lng).map((prop) => {
                   const popup = (
                     <Popup>
