@@ -44,8 +44,8 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!password || password.length < 5) {
-      setError("La contraseña debe tener al menos 5 caracteres");
+    if (!password || password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres");
       return;
     }
     if (password !== confirm) {

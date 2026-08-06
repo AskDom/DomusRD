@@ -56,11 +56,18 @@ export default function AuthModal({ isOpen, onClose }) {
       setError("Ingresa un correo electrónico válido");
       return;
     }
-    if (!form.password || form.password.length < 5) {
-      setError("La contraseña debe tener al menos 5 caracteres");
+    if (!form.password) {
+      setError("La contraseña es requerida");
       return;
     }
     if (!isLogin) {
+      // El mínimo solo aplica a cuentas nuevas — el login no lo exige del
+      // lado del backend, para no bloquear a usuarios ya existentes con
+      // passwords más cortos que el mínimo actual.
+      if (form.password.length < 8) {
+        setError("La contraseña debe tener al menos 8 caracteres");
+        return;
+      }
       if (!form.name.trim() || form.name.trim().length < 2) {
         setError("El nombre debe tener al menos 2 caracteres");
         return;
