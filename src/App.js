@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { trackPageView } from "./analytics";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -8,24 +8,28 @@ import { InboxProvider } from "./context/InboxContext";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AnimatePresence } from "framer-motion";
-
-import Home from "./pages/Home";
-import Publish from "./pages/Publish";
-import PropertyDetail from "./pages/PropertyDetail";
-import SearchResults from "./pages/SearchResults";
-import Profile from "./pages/Profile";
-import AgentProfile from "./pages/AgentProfile";
-import Favorites from "./pages/Favorites";
-import Inbox from "./pages/Inbox";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Terminos from "./pages/Terminos";
-import Privacidad from "./pages/Privacidad";
-import Cookies from "./pages/Cookies";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/PageTransition";
+import PageLoader from "./components/PageLoader";
+
+// Cada página es su propio chunk — antes todo esto (incluido el panel de
+// Admin y el mapa de Leaflet, que casi nadie visita) iba en el bundle
+// inicial. PageLoader se ve mientras React baja el chunk de la ruta pedida.
+const Home            = lazy(() => import("./pages/Home"));
+const Publish         = lazy(() => import("./pages/Publish"));
+const PropertyDetail  = lazy(() => import("./pages/PropertyDetail"));
+const SearchResults   = lazy(() => import("./pages/SearchResults"));
+const Profile         = lazy(() => import("./pages/Profile"));
+const AgentProfile    = lazy(() => import("./pages/AgentProfile"));
+const Favorites       = lazy(() => import("./pages/Favorites"));
+const Inbox           = lazy(() => import("./pages/Inbox"));
+const NotFound        = lazy(() => import("./pages/NotFound"));
+const Admin           = lazy(() => import("./pages/Admin"));
+const ForgotPassword  = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword   = lazy(() => import("./pages/ResetPassword"));
+const Terminos        = lazy(() => import("./pages/Terminos"));
+const Privacidad      = lazy(() => import("./pages/Privacidad"));
+const Cookies         = lazy(() => import("./pages/Cookies"));
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -39,29 +43,31 @@ function AnimatedRoutes() {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
-        <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
-        <Route path="/agent/:id" element={<PageTransition><AgentProfile /></PageTransition>} />
-        <Route path="/favorites" element={<PageTransition><Favorites /></PageTransition>} />
-        <Route path="/inbox" element={<PageTransition><Inbox /></PageTransition>} />
-        <Route path="/publish" element={
-          <PageTransition>
-            <ProtectedRoute>
-              <Publish />
-            </ProtectedRoute>
-          </PageTransition>
-        } />
-        <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
-        <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
-        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
-        <Route path="/terminos" element={<PageTransition><Terminos /></PageTransition>} />
-        <Route path="/privacidad" element={<PageTransition><Privacidad /></PageTransition>} />
-        <Route path="/cookies" element={<PageTransition><Cookies /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+          <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
+          <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
+          <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+          <Route path="/agent/:id" element={<PageTransition><AgentProfile /></PageTransition>} />
+          <Route path="/favorites" element={<PageTransition><Favorites /></PageTransition>} />
+          <Route path="/inbox" element={<PageTransition><Inbox /></PageTransition>} />
+          <Route path="/publish" element={
+            <PageTransition>
+              <ProtectedRoute>
+                <Publish />
+              </ProtectedRoute>
+            </PageTransition>
+          } />
+          <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
+          <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+          <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+          <Route path="/terminos" element={<PageTransition><Terminos /></PageTransition>} />
+          <Route path="/privacidad" element={<PageTransition><Privacidad /></PageTransition>} />
+          <Route path="/cookies" element={<PageTransition><Cookies /></PageTransition>} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 }
