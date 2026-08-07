@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Star } from "lucide-react";
 import { useAuth, CSRF_HEADERS } from "../context/AuthContext";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function StarRating({ value, onChange, readOnly = false, size = 24 }) {
   const [hovered, setHovered] = useState(0);

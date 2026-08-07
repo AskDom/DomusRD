@@ -3,6 +3,9 @@ import { useSearchParams, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Circle, Tooltip, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { motion } from "framer-motion";
 import { Bed, Bath, Car, MapPin, Heart, Search } from "lucide-react";
 import Navbar from "../components/Navbar";
@@ -19,9 +22,9 @@ import { formatPriceShort } from "../utils/formatPrice";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl:       require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
+  iconRetinaUrl: markerIcon2x,
+  iconUrl:       markerIcon,
+  shadowUrl:     markerShadow,
 });
 
 function createPriceIcon(price, isActive, status, currency) {
@@ -81,7 +84,7 @@ const normalizeProperty = (p) => ({
   image:  p.images?.[0] || "",
 });
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams();
