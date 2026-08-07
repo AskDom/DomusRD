@@ -6,7 +6,7 @@ import { formatLocation } from "../utils/formatLocation";
 import { useToast } from "../context/ToastContext";
 import Navbar from "../components/Navbar";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ROLE_COLORS = {
   ADMIN:    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",

@@ -10,7 +10,7 @@ import { useToast } from "../context/ToastContext";
 import PriceTag from "../components/PriceTag";
 import { formatLocation } from "../utils/formatLocation";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ROLE_CONFIG = {
   Admin:    { label: "Admin",    Icon: ShieldCheck, bg: "from-purple-500 to-purple-600" },

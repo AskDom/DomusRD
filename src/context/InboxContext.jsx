@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { io } from "socket.io-client";
 import { useAuth, CSRF_HEADERS } from "./AuthContext";
 
-const API_URL    = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL    = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const InboxContext = createContext();
 
 export function InboxProvider({ children }) {

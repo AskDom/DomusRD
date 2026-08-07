@@ -8,7 +8,7 @@ import PropertyCard from "../components/PropertyCard";
 import { useProperties } from "../context/PropertiesContext";
 import { useToast } from "../context/ToastContext";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ROLE_CONFIG = {
   AGENTE:   { label: "Agente",   Icon: Star,        bg: "from-amber-500 to-orange-500"  },
